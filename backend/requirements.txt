@@ -1,0 +1,52 @@
+# Core Framework
+fastapi==0.115.12
+uvicorn[standard]==0.31.1
+python-multipart==0.0.20
+pydantic==2.10.6
+pydantic-settings==2.6.1
+
+# LangGraph & LangChain (Latest v1.0 - January 2026)
+# All packages must be v1.0+ for compatibility
+langchain>=1.0.0,<2.0.0  # Latest stable v1.0
+langchain-core>=1.2.7,<2.0.0  # Latest: 1.2.7 (January 2026)
+langchain-community>=1.0.0,<2.0.0  # Latest stable v1.0
+langgraph>=1.0.0,<2.0.0  # Latest stable v1.0
+langchain-openai>=1.0.0,<2.0.0  # For OpenRouter (default) and OpenAI GPT-OSS-20B
+langchain-ollama>=0.1.0,<2.0.0  # For Ollama (local LLM)
+langchain-google-genai>=2.0.0,<3.0.0  # Google Gemini
+langchain-groq>=1.0.0,<2.0.0  # Groq
+langchain-anthropic>=1.0.0,<2.0.0  # Anthropic Claude
+
+# DeepAgents (check for latest version compatible with LangChain 1.0)
+deepagents>=0.1.0  # Update to latest if available
+
+# Tools & Utilities
+python-dotenv==1.0.1
+httpx==0.28.1
+requests==2.32.3
+beautifulsoup4==4.12.3
+lxml==5.3.0
+
+# CORS & Security
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+
+# Logging & Monitoring
+structlog==24.1.0
+
+# Redis for caching (required for Phase 4)
+redis==5.0.1
+hiredis==2.3.2
+
+# Optional: Database (if using persistent store)
+# psycopg2-binary==2.9.9
+
+# Development & Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-cov==5.0.0
+pytest-mock==3.14.0
+black==24.4.2
+ruff==0.5.6
+mypy==1.10.1
+aiohttp==3.10.11  # For load testing

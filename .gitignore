@@ -5,7 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
-
+other/
+other-docs/
 # Distribution / packaging
 .Python
 build/
@@ -205,3 +206,43 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Agent Chat UI - Using Git Submodule (see .gitmodules)
+# Don't ignore the directory, but ignore its build artifacts
+agent-chat-ui/.next/
+agent-chat-ui/node_modules/
+agent-chat-ui/.env.local
+agent-chat-ui/.env*.local
+agent-chat-ui/dist/
+agent-chat-ui/build/
+agent-chat-ui/.pnpm-store/
+
+# Node.js / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+out/
+dist/
+build/
+
+# Environment files
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+test_*.py
+!tests/

@@ -1,0 +1,7 @@
+# Example .gitmodules file
+# This will be created automatically when you add the submodule
+# Run: git submodule add https://github.com/langchain-ai/agent-chat-ui.git agent-chat-ui
+
+[submodule "agent-chat-ui"]
+    path = agent-chat-ui
+    url = https://github.com/langchain-ai/agent-chat-ui.git

@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: enterprise-real-estate-backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ../backend/.env
+    volumes:
+      - ../backend:/app
+      - ../reports:/app/reports
+      - ../memories:/app/memories
+    depends_on:
+      - redis
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: enterprise-real-estate-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-dev:/data
+    networks:
+      - app-network
+    command: redis-server --appendonly yes
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  redis-data-dev:
