@@ -14,11 +14,16 @@
 
 </div>
 
+<div align="center">
+  <img src="assets/complete_architecture.png" alt="Real Estate AI Deep Agents Architecture" width="800"/>
+  <p><em>Multi-Agent Architecture Overview</em></p>
+</div>
+
 ---
 
 ## 📖 Overview
 
-The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI system that helps users search, analyze, and evaluate real estate properties with comprehensive insights. Built on a multi-agent architecture using **DeepAgents** for orchestration and **LangGraph** for state management, it provides:
+The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI system that helps users search, analyze, and evaluate real estate properties with comprehensive insights. Built on a multi-agent architecture using **DeepAgents** for orchestration and **LangGraph** for state management, it provides intelligent automation for real estate professionals, investors, and homebuyers.
 
 - 🔍 **Intelligent Property Search**: Search properties for sale or rent across the US
 - 📊 **Financial Analysis**: ROI calculations, mortgage estimates, property tax analysis
@@ -29,11 +34,12 @@ The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI syste
 
 ### Key Highlights
 
-- ✅ **Production-Ready**: Monitoring, caching, rate limiting, error handling
-- ✅ **Multi-LLM Support**: OpenRouter (default), Ollama, OpenAI, Groq, Anthropic, Google
-- ✅ **Enterprise Features**: HITL workflows, persistent memory, retry logic
-- ✅ **Modern Stack**: FastAPI, LangGraph, LangChain v1.0+, TypeScript frontend
-- ✅ **Comprehensive Tools**: 15+ tools for property search, analysis, and research
+- ✅ **Production-Ready**: Monitoring, caching, rate limiting, error handling, and comprehensive logging
+- ✅ **Multi-LLM Support**: OpenRouter (default), Ollama, OpenAI, Groq, Anthropic, Google with automatic fallback
+- ✅ **Enterprise Features**: HITL workflows, persistent memory, retry logic, and token management
+- ✅ **Modern Stack**: FastAPI, LangGraph, LangChain v1.0+, TypeScript frontend with Next.js
+- ✅ **Comprehensive Tools**: 15+ tools for property search, financial analysis, location research, and market trends
+- ✅ **Intelligent Delegation**: Smart task routing between direct tools and specialized subagents
 
 ---
 
@@ -65,7 +71,198 @@ The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI syste
 
 ## 🏗️ Architecture
 
+<div align="center">
+  <img src="assets/msedge_PRrDGDBokM.png" alt="System Architecture Diagram" width="900"/>
+  <p><em>Complete System Architecture</em></p>
+</div>
+
+### LangGraph Architecture
+
+The system is built on **LangGraph StateGraph** for state management and agent orchestration. Below are two visualizations:
+
+1. **Complete Architecture** - Shows all subagents, tools, and connections
+2. **LangGraph Internal Structure** - Generated using LangGraph's built-in `draw_mermaid_png()` method
+
+#### Complete Architecture (All Subagents)
+
+<div align="center">
+  <img src="assets/complete_architecture.png" alt="Complete Architecture with All Subagents" width="1000" onerror="this.style.display='none'"/>
+  <p><em>Complete System Architecture with All 6 Subagents and Tools</em></p>
+  <p><small>💡 To generate this PNG: <code>python backend/scripts/mermaid_to_png.py</code> or use <code>mmdc -i docs/complete_architecture.mmd -o assets/complete_architecture.png</code></small></p>
+</div>
+
+```mermaid
+---
+config:
+  flowchart:
+    curve: linear
+    padding: 20
+---
+graph TB
+    Start([User Query]) --> UI{User Interface}
+    UI -->|HTTP/WebSocket| API[FastAPI Backend<br/>LangGraph Platform API]
+    
+    API --> MainAgent[Main Orchestrator Agent<br/>DeepAgents + LangGraph StateGraph]
+    
+    MainAgent --> Decision{Query Analysis}
+    
+    Decision -->|Simple Query| DirectTools[Direct Tools]
+    Decision -->|Complex Query| SubagentRouter[Subagent Router]
+    
+    DirectTools --> Tool1[realty_us_search_buy]
+    DirectTools --> Tool2[realty_us_search_rent]
+    
+    SubagentRouter --> SubAgent1[Property Research Agent]
+    SubagentRouter --> SubAgent2[Location Analysis Agent]
+    SubagentRouter --> SubAgent3[Financial Analysis Agent]
+    SubagentRouter --> SubAgent4[Data Extraction Agent]
+    SubagentRouter --> SubAgent5[Market Trends Agent]
+    SubagentRouter --> SubAgent6[Report Generator Agent]
+    
+    SubAgent1 --> Tool1
+    SubAgent1 --> Tool2
+    
+    SubAgent2 --> Tool3[geocode_address]
+    SubAgent2 --> Tool4[osm_poi_search]
+    SubAgent2 --> Tool5[osm_route]
+    SubAgent2 --> Tool6[find_nearby_amenities]
+    
+    SubAgent3 --> Tool7[calculate_roi]
+    SubAgent3 --> Tool8[estimate_mortgage]
+    SubAgent3 --> Tool9[calculate_property_tax]
+    SubAgent3 --> Tool10[compare_properties]
+    
+    SubAgent4 --> Tool11[scrape_property_page]
+    SubAgent4 --> Tool12[extract_property_data]
+    
+    SubAgent5 --> Tool13[search_market_trends]
+    SubAgent5 --> Tool14[get_price_history]
+    SubAgent5 --> Tool15[compare_markets]
+    
+    SubAgent6 --> FileSystem[Filesystem Backend<br/>Report Generation]
+    
+    Tool1 --> API1[RealtyUS API<br/>via RapidAPI]
+    Tool2 --> API1
+    Tool3 --> API2[OpenStreetMap<br/>Nominatim]
+    Tool4 --> API2
+    Tool5 --> API3[OpenRouteService<br/>Route Calculation]
+    Tool6 --> API2
+    Tool11 --> API4[Web Scraping<br/>Zillow/Realtor/Redfin]
+    Tool12 --> API4
+    
+    MainAgent --> StateGraph[LangGraph StateGraph]
+    StateGraph --> Memory[MemorySaver<br/>Conversation Memory]
+    StateGraph --> Storage[Composite Backend<br/>Filesystem Storage]
+    StateGraph --> LLM[LLM Provider<br/>OpenRouter/Ollama/OpenAI/etc]
+    
+    MainAgent --> Response[Response Synthesis]
+    Response --> UI
+    
+    style MainAgent fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
+    style StateGraph fill:#7B68EE,stroke:#5A4FCF,stroke-width:2px,color:#fff
+    style SubagentRouter fill:#50C878,stroke:#2E8B57,stroke-width:2px,color:#fff
+    style DirectTools fill:#FF6B6B,stroke:#CC5555,stroke-width:2px,color:#fff
+    style LLM fill:#FFA500,stroke:#CC8500,stroke-width:2px,color:#fff
+    style SubAgent1 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent2 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent3 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent4 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent5 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent6 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style API1 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+    style API2 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+    style API3 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+    style API4 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+```
+
+#### LangGraph Internal Structure
+
+<div align="center">
+  <img src="assets/langgraph_architecture.png" alt="LangGraph Internal Structure" width="900" onerror="this.style.display='none'"/>
+  <p><em>LangGraph StateGraph Internal Structure (Generated using LangGraph's draw_mermaid_png())</em></p>
+</div>
+
+> **Note**: To generate these visualizations, run:
+> - `python backend/scripts/visualize_complete_architecture.py` - Complete architecture with all subagents
+> - `python backend/scripts/visualize_architecture.py` - LangGraph internal structure only
+
+```mermaid
+graph TB
+    Start([User Query]) --> UI{User Interface}
+    UI -->|HTTP Request| API[FastAPI Backend]
+    UI -->|WebSocket| LangGraphAPI[LangGraph Platform API]
+    
+    API --> MainAgent[Main Orchestrator Agent<br/>DeepAgents + LangGraph]
+    LangGraphAPI --> MainAgent
+    
+    MainAgent --> Decision{Query Type?}
+    
+    Decision -->|Simple Query| DirectTools[Direct Tools]
+    Decision -->|Complex Query| SubagentDelegation[Subagent Delegation]
+    
+    DirectTools --> Tool1[realty_us_search_buy]
+    DirectTools --> Tool2[realty_us_search_rent]
+    
+    SubagentDelegation --> SubAgent1[Property Research Agent]
+    SubagentDelegation --> SubAgent2[Location Analysis Agent]
+    SubagentDelegation --> SubAgent3[Financial Analysis Agent]
+    SubagentDelegation --> SubAgent4[Data Extraction Agent]
+    SubagentDelegation --> SubAgent5[Market Trends Agent]
+    SubagentDelegation --> SubAgent6[Report Generator Agent]
+    
+    SubAgent1 --> Tool1
+    SubAgent1 --> Tool2
+    
+    SubAgent2 --> Tool3[geocode_address]
+    SubAgent2 --> Tool4[osm_poi_search]
+    SubAgent2 --> Tool5[osm_route]
+    SubAgent2 --> Tool6[find_nearby_amenities]
+    
+    SubAgent3 --> Tool7[calculate_roi]
+    SubAgent3 --> Tool8[estimate_mortgage]
+    SubAgent3 --> Tool9[calculate_property_tax]
+    SubAgent3 --> Tool10[compare_properties]
+    
+    SubAgent4 --> Tool11[scrape_property_page]
+    SubAgent4 --> Tool12[extract_property_data]
+    
+    SubAgent5 --> Tool13[search_market_trends]
+    SubAgent5 --> Tool14[get_price_history]
+    SubAgent5 --> Tool15[compare_markets]
+    
+    SubAgent6 --> FileSystem[Filesystem Backend]
+    
+    Tool1 --> ExternalAPI1[RealtyUS API]
+    Tool2 --> ExternalAPI1
+    Tool3 --> ExternalAPI2[OpenStreetMap]
+    Tool4 --> ExternalAPI2
+    Tool5 --> ExternalAPI3[OpenRouteService]
+    Tool6 --> ExternalAPI2
+    
+    MainAgent --> StateGraph[LangGraph StateGraph]
+    StateGraph --> Memory[MemorySaver<br/>Conversation Memory]
+    StateGraph --> Storage[Composite Backend<br/>Filesystem Storage]
+    StateGraph --> LLM[LLM Provider<br/>OpenRouter/Ollama/etc]
+    
+    MainAgent --> Response[Response Generation]
+    Response --> UI
+    
+    style MainAgent fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
+    style StateGraph fill:#7B68EE,stroke:#5A4FCF,stroke-width:2px,color:#fff
+    style SubagentDelegation fill:#50C878,stroke:#2E8B57,stroke-width:2px,color:#fff
+    style DirectTools fill:#FF6B6B,stroke:#CC5555,stroke-width:2px,color:#fff
+    style LLM fill:#FFA500,stroke:#CC8500,stroke-width:2px,color:#fff
+```
+
+> **Note**: This diagram is generated from the actual LangGraph StateGraph structure. You can visualize the graph programmatically using:
+> ```bash
+> python backend/scripts/visualize_architecture.py
+> ```
+> Or use [LangGraph Studio](https://github.com/langchain-ai/langgraph/tree/main/packages/langgraph-studio) for interactive visualization.
+
 ### System Overview
+
+The system follows a sophisticated multi-agent architecture with intelligent task delegation:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -113,7 +310,15 @@ The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI syste
 - **Frontend**: agent-chat-ui (Next.js, TypeScript)
 - **API Gateway**: LangGraph Platform API (via `langgraph dev`)
 
-For detailed architecture documentation, see [BACKEND_AND_AGENTS_REPORT.md](./BACKEND_AND_AGENTS_REPORT.md).
+### How It Works
+
+1. **User Query**: User sends a query via frontend or API
+2. **Orchestration**: Main agent analyzes the query and decides:
+   - Use direct tools for simple queries (e.g., "Find houses in SF")
+   - Delegate to subagents for complex tasks (e.g., "Find, analyze, and calculate ROI")
+3. **Execution**: Tools and subagents execute their specialized tasks
+4. **Synthesis**: Main agent combines results and provides comprehensive response
+5. **Memory**: Results stored in persistent memory for future reference
 
 ---
 
@@ -131,7 +336,7 @@ For detailed architecture documentation, see [BACKEND_AND_AGENTS_REPORT.md](./BA
 1. **Clone the repository**:
 
 ```bash
-git clone --recurse-submodules https://github.com/your-username/real-estate-ai-agent.git
+git clone --recurse-submodules https://github.com/oelbourki/real-estate-ai-agent.git
 cd real-estate-ai-agent
 ```
 
@@ -252,6 +457,10 @@ See `backend/.env.example` for all available options.
 
 ## 💡 Usage Examples
 
+### Quick Demo
+
+Try these example queries to see the agent in action:
+
 ### Example 1: Simple Property Search
 
 ```bash
@@ -303,6 +512,19 @@ curl -X POST http://localhost:8000/api/v1/chat \
 ```
 
 **Response**: Nearby schools, restaurants, parks, hospitals, shopping centers, etc.
+
+### Example 5: Comprehensive Property Report
+
+```bash
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Generate a comprehensive report for properties in Seattle, WA including market analysis and ROI calculations",
+    "user_name": "Sarah"
+  }'
+```
+
+**Response**: Complete property report with market trends, location analysis, financial projections, and recommendations.
 
 ### Using the Frontend (agent-chat-ui)
 
@@ -450,17 +672,6 @@ mypy .
 
 ---
 
-## 📖 Documentation
-
-### Comprehensive Guides
-
-- **[Backend and Agents Report](./BACKEND_AND_AGENTS_REPORT.md)** - Complete architecture documentation
-- **[GitHub Push Analysis](./GITHUB_PUSH_ANALYSIS.md)** - What to push to GitHub
-- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Production deployment instructions
-- **[Monitoring Guide](./docs/MONITORING.md)** - Monitoring and observability
-- **[Production Checklist](./docs/PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
-- **[Runbook](./docs/RUNBOOK.md)** - Operations runbook
-
 ### API Documentation
 
 - FastAPI docs: `http://localhost:8000/docs` (when running FastAPI backend)
@@ -541,22 +752,15 @@ For more troubleshooting, see [docs/](./docs/).
 
 ---
 
-## 📊 Project Status
+## 📝 License
 
-- ✅ **Phase 1**: Foundation - Complete
-- ✅ **Phase 2**: Subagent Development - Complete
-- ✅ **Phase 3**: Advanced Features - Complete
-- ✅ **Phase 4**: Enterprise Features - Complete
-- ✅ **Phase 5**: Production Readiness - Complete
-
-**Current Version**: 1.0.0  
-**Status**: Production Ready
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📝 License
+## 🌟 Star History
 
-[Add your license here - MIT, Apache 2.0, etc.]
+If you find this project useful, please consider giving it a ⭐ on GitHub!
 
 ---
 
@@ -573,9 +777,10 @@ For more troubleshooting, see [docs/](./docs/).
 
 ## 📧 Contact & Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/real-estate-ai-agent/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/real-estate-ai-agent/discussions)
-- **Email**: [Your email]
+- **Author**: Otmane El Bourki
+- **Email**: [otmane.elbourki@gmail.com](mailto:otmane.elbourki@gmail.com)
+- **Issues**: [GitHub Issues](https://github.com/oelbourki/real-estate-ai-agent/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/oelbourki/real-estate-ai-agent/discussions)
 
 ---
 
@@ -583,6 +788,10 @@ For more troubleshooting, see [docs/](./docs/).
 
 **Built with ❤️ using DeepAgents, LangGraph, and FastAPI**
 
-[⭐ Star this repo](https://github.com/your-username/real-estate-ai-agent) • [🐛 Report Bug](https://github.com/your-username/real-estate-ai-agent/issues) • [💡 Request Feature](https://github.com/your-username/real-estate-ai-agent/issues)
+[⭐ Star this repo](https://github.com/oelbourki/real-estate-ai-agent) • [🐛 Report Bug](https://github.com/oelbourki/real-estate-ai-agent/issues) • [💡 Request Feature](https://github.com/oelbourki/real-estate-ai-agent/issues) • [📖 Documentation](./docs/)
+
+---
+
+Made with ❤️ by [Otmane El Bourki](mailto:otmane.elbourki@gmail.com)
 
 </div>

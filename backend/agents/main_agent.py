@@ -201,6 +201,7 @@ def create_main_agent():
             memory=get_memory_paths(),  # Long-term memory (Phase 3)
             interrupt_on=interrupt_on,  # Phase 4: HITL workflows
         )
+
         logger.info("Main agent created successfully with subagents and HITL")
         return agent
     except Exception as e:

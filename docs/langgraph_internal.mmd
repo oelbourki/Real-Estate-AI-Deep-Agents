@@ -1,0 +1,28 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	model(model)
+	tools(tools)
+	TodoListMiddleware\2eafter_model(TodoListMiddleware.after_model)
+	MemoryMiddleware\2ebefore_agent(MemoryMiddleware.before_agent)
+	SummarizationMiddleware\2ebefore_model(SummarizationMiddleware.before_model)
+	PatchToolCallsMiddleware\2ebefore_agent(PatchToolCallsMiddleware.before_agent)
+	HumanInTheLoopMiddleware\2eafter_model(HumanInTheLoopMiddleware.after_model)
+	__end__([<p>__end__</p>]):::last
+	HumanInTheLoopMiddleware\2eafter_model --> TodoListMiddleware\2eafter_model;
+	MemoryMiddleware\2ebefore_agent --> PatchToolCallsMiddleware\2ebefore_agent;
+	PatchToolCallsMiddleware\2ebefore_agent --> SummarizationMiddleware\2ebefore_model;
+	SummarizationMiddleware\2ebefore_model --> model;
+	TodoListMiddleware\2eafter_model -.-> SummarizationMiddleware\2ebefore_model;
+	TodoListMiddleware\2eafter_model -.-> __end__;
+	TodoListMiddleware\2eafter_model -.-> tools;
+	__start__ --> MemoryMiddleware\2ebefore_agent;
+	model --> HumanInTheLoopMiddleware\2eafter_model;
+	tools -.-> SummarizationMiddleware\2ebefore_model;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

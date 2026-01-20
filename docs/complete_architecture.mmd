@@ -1,0 +1,82 @@
+---
+config:
+  flowchart:
+    curve: linear
+    padding: 20
+---
+graph TB
+    Start([User Query]) --> UI{User Interface}
+    UI -->|HTTP/WebSocket| API[FastAPI Backend<br/>LangGraph Platform API]
+    
+    API --> MainAgent[Main Orchestrator Agent<br/>DeepAgents + LangGraph StateGraph]
+    
+    MainAgent --> Decision{Query Analysis}
+    
+    Decision -->|Simple Query| DirectTools[Direct Tools]
+    Decision -->|Complex Query| SubagentRouter[Subagent Router]
+    
+    DirectTools --> Tool1[realty_us_search_buy]
+    DirectTools --> Tool2[realty_us_search_rent]
+    
+    SubagentRouter --> SubAgent1[Property Research Agent]
+    SubagentRouter --> SubAgent2[Location Analysis Agent]
+    SubagentRouter --> SubAgent3[Financial Analysis Agent]
+    SubagentRouter --> SubAgent4[Data Extraction Agent]
+    SubagentRouter --> SubAgent5[Market Trends Agent]
+    SubagentRouter --> SubAgent6[Report Generator Agent]
+    
+    SubAgent1 --> Tool1
+    SubAgent1 --> Tool2
+    
+    SubAgent2 --> Tool3[geocode_address]
+    SubAgent2 --> Tool4[osm_poi_search]
+    SubAgent2 --> Tool5[osm_route]
+    SubAgent2 --> Tool6[find_nearby_amenities]
+    
+    SubAgent3 --> Tool7[calculate_roi]
+    SubAgent3 --> Tool8[estimate_mortgage]
+    SubAgent3 --> Tool9[calculate_property_tax]
+    SubAgent3 --> Tool10[compare_properties]
+    
+    SubAgent4 --> Tool11[scrape_property_page]
+    SubAgent4 --> Tool12[extract_property_data]
+    
+    SubAgent5 --> Tool13[search_market_trends]
+    SubAgent5 --> Tool14[get_price_history]
+    SubAgent5 --> Tool15[compare_markets]
+    
+    SubAgent6 --> FileSystem[Filesystem Backend<br/>Report Generation]
+    
+    Tool1 --> API1[RealtyUS API<br/>via RapidAPI]
+    Tool2 --> API1
+    Tool3 --> API2[OpenStreetMap<br/>Nominatim]
+    Tool4 --> API2
+    Tool5 --> API3[OpenRouteService<br/>Route Calculation]
+    Tool6 --> API2
+    Tool11 --> API4[Web Scraping<br/>Zillow/Realtor/Redfin]
+    Tool12 --> API4
+    
+    MainAgent --> StateGraph[LangGraph StateGraph]
+    StateGraph --> Memory[MemorySaver<br/>Conversation Memory]
+    StateGraph --> Storage[Composite Backend<br/>Filesystem Storage]
+    StateGraph --> LLM[LLM Provider<br/>OpenRouter/Ollama/OpenAI/etc]
+    
+    MainAgent --> Response[Response Synthesis]
+    Response --> UI
+    
+    %% Styling
+    style MainAgent fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
+    style StateGraph fill:#7B68EE,stroke:#5A4FCF,stroke-width:2px,color:#fff
+    style SubagentRouter fill:#50C878,stroke:#2E8B57,stroke-width:2px,color:#fff
+    style DirectTools fill:#FF6B6B,stroke:#CC5555,stroke-width:2px,color:#fff
+    style LLM fill:#FFA500,stroke:#CC8500,stroke-width:2px,color:#fff
+    style SubAgent1 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent2 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent3 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent4 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent5 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style SubAgent6 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style API1 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+    style API2 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+    style API3 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+    style API4 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
