@@ -55,6 +55,15 @@ class Settings(BaseSettings):
     web_unlocker_zone: str | None = None
     browser_zone: str | None = None
     
+    # Market Research APIs
+    tavily_api_key: str | None = None  # For market trends search (https://tavily.com/)
+    serper_api_key: str | None = None  # Alternative for market trends (https://serper.dev/)
+    zillow_api_key: str | None = None  # For price history (requires partnership)
+    redfin_api_key: str | None = None  # For price history (requires partnership)
+    
+    # Web Scraping APIs
+    scraperapi_key: str | None = None  # Alternative to Bright Data (https://www.scraperapi.com/)
+    
     # Redis
     redis_url: str = "redis://localhost:6379/0"
     

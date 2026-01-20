@@ -246,3 +246,5 @@ Thumbs.db
 # Test files
 test_*.py
 !tests/
+
+docs/

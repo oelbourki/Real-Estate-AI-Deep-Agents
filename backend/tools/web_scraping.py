@@ -6,8 +6,229 @@ import requests
 import logging
 from bs4 import BeautifulSoup
 import json
+import re
+from backend.config.settings import settings
+from backend.utils.retry import retry_on_http_error
+from backend.utils.cache import cached
 
 logger = logging.getLogger(__name__)
+
+
+def _scrape_with_scraperapi(url: str) -> requests.Response:
+    """Scrape URL using ScraperAPI if available."""
+    if settings.scraperapi_key:
+        scraperapi_url = "http://api.scraperapi.com"
+        params = {
+            "api_key": settings.scraperapi_key,
+            "url": url,
+            "render": "true"  # Render JavaScript
+        }
+        response = requests.get(scraperapi_url, params=params, timeout=30)
+        return response
+    else:
+        # Fallback to direct request
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=15)
+        return response
+
+
+def _parse_zillow(soup: BeautifulSoup, url: str) -> dict:
+    """Parse Zillow-specific property page."""
+    result = {
+        "url": url,
+        "source": "zillow",
+        "address": None,
+        "price": None,
+        "bedrooms": None,
+        "bathrooms": None,
+        "square_feet": None,
+        "lot_size": None,
+        "year_built": None,
+        "property_type": None,
+        "description": None,
+        "image_urls": [],
+    }
+    
+    text = soup.get_text()
+    
+    # Try to find address in title or h1
+    title_tag = soup.find('title')
+    if title_tag:
+        title_text = title_tag.get_text()
+        # Zillow titles often have format: "Address | Zillow"
+        if '|' in title_text:
+            result["address"] = title_text.split('|')[0].strip()
+    
+    # Try data-testid attributes (Zillow uses these)
+    price_elem = soup.find(attrs={"data-testid": "price"}) or soup.find(class_=re.compile(r'price', re.I))
+    if price_elem:
+        price_text = price_elem.get_text()
+        price_match = re.search(r'\$([\d,]+)', price_text)
+        if price_match:
+            result["price"] = price_match.group(0)
+    
+    # Extract bedrooms/bathrooms
+    bed_bath_elem = soup.find(attrs={"data-testid": "bed-bath"}) or soup.find(class_=re.compile(r'bed|bath', re.I))
+    if bed_bath_elem:
+        bed_bath_text = bed_bath_elem.get_text()
+        bed_match = re.search(r'(\d+)\s*(?:bed|bedroom)', bed_bath_text, re.IGNORECASE)
+        bath_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:bath|bathroom)', bed_bath_text, re.IGNORECASE)
+        if bed_match:
+            result["bedrooms"] = int(bed_match.group(1))
+        if bath_match:
+            result["bathrooms"] = float(bath_match.group(1))
+    
+    # Extract square feet
+    sqft_match = re.search(r'([\d,]+)\s*(?:sq\.?\s*ft|square\s*feet)', text, re.IGNORECASE)
+    if sqft_match:
+        result["square_feet"] = int(sqft_match.group(1).replace(',', ''))
+    
+    # Extract lot size
+    lot_match = re.search(r'([\d,]+(?:\.\d+)?)\s*(?:acre|acres|sq\.?\s*ft)', text, re.IGNORECASE)
+    if lot_match:
+        result["lot_size"] = lot_match.group(1)
+    
+    # Extract year built
+    year_match = re.search(r'Built in (\d{4})|Year built[:\s]+(\d{4})', text, re.IGNORECASE)
+    if year_match:
+        result["year_built"] = int(year_match.group(1) or year_match.group(2))
+    
+    # Extract images
+    img_tags = soup.find_all('img', src=True)
+    for img in img_tags[:10]:  # Limit to first 10 images
+        src = img.get('src') or img.get('data-src')
+        if src and ('property' in src.lower() or 'photo' in src.lower() or 'zillow' in src.lower()):
+            if src.startswith('http'):
+                result["image_urls"].append(src)
+            elif src.startswith('//'):
+                result["image_urls"].append('https:' + src)
+    
+    return result
+
+
+def _parse_realtor(soup: BeautifulSoup, url: str) -> dict:
+    """Parse Realtor.com-specific property page."""
+    result = {
+        "url": url,
+        "source": "realtor",
+        "address": None,
+        "price": None,
+        "bedrooms": None,
+        "bathrooms": None,
+        "square_feet": None,
+        "lot_size": None,
+        "year_built": None,
+        "property_type": None,
+        "description": None,
+        "image_urls": [],
+    }
+    
+    text = soup.get_text()
+    
+    # Realtor.com specific parsing
+    # Address in h1 or title
+    h1 = soup.find('h1')
+    if h1:
+        result["address"] = h1.get_text().strip()
+    
+    # Price
+    price_elem = soup.find(class_=re.compile(r'price', re.I)) or soup.find(attrs={"data-testid": "price"})
+    if price_elem:
+        price_text = price_elem.get_text()
+        price_match = re.search(r'\$([\d,]+)', price_text)
+        if price_match:
+            result["price"] = price_match.group(0)
+    
+    # Bedrooms/Bathrooms
+    bed_bath_text = text
+    bed_match = re.search(r'(\d+)\s*(?:bed|bedroom)', bed_bath_text, re.IGNORECASE)
+    bath_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:bath|bathroom)', bed_bath_text, re.IGNORECASE)
+    if bed_match:
+        result["bedrooms"] = int(bed_match.group(1))
+    if bath_match:
+        result["bathrooms"] = float(bath_match.group(1))
+    
+    # Square feet
+    sqft_match = re.search(r'([\d,]+)\s*(?:sq\.?\s*ft|square\s*feet)', text, re.IGNORECASE)
+    if sqft_match:
+        result["square_feet"] = int(sqft_match.group(1).replace(',', ''))
+    
+    return result
+
+
+def _parse_redfin(soup: BeautifulSoup, url: str) -> dict:
+    """Parse Redfin-specific property page."""
+    result = {
+        "url": url,
+        "source": "redfin",
+        "address": None,
+        "price": None,
+        "bedrooms": None,
+        "bathrooms": None,
+        "square_feet": None,
+        "lot_size": None,
+        "year_built": None,
+        "property_type": None,
+        "description": None,
+        "image_urls": [],
+    }
+    
+    text = soup.get_text()
+    
+    # Redfin specific parsing
+    # Similar to Zillow/Realtor but with Redfin-specific selectors
+    price_match = re.search(r'\$([\d,]+)', text)
+    if price_match:
+        result["price"] = price_match.group(0)
+    
+    bed_match = re.search(r'(\d+)\s*(?:bed|bedroom)', text, re.IGNORECASE)
+    bath_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:bath|bathroom)', text, re.IGNORECASE)
+    if bed_match:
+        result["bedrooms"] = int(bed_match.group(1))
+    if bath_match:
+        result["bathrooms"] = float(bath_match.group(1))
+    
+    return result
+
+
+def _parse_generic(soup: BeautifulSoup, url: str) -> dict:
+    """Parse generic property page with common patterns."""
+    result = {
+        "url": url,
+        "source": "generic",
+        "address": None,
+        "price": None,
+        "bedrooms": None,
+        "bathrooms": None,
+        "square_feet": None,
+        "lot_size": None,
+        "year_built": None,
+        "property_type": None,
+        "description": None,
+        "image_urls": [],
+    }
+    
+    text = soup.get_text()
+    
+    # Generic extraction
+    price_match = re.search(r'\$([\d,]+)', text)
+    if price_match:
+        result["price"] = price_match.group(0)
+    
+    bed_match = re.search(r'(\d+)\s*(?:bed|bedroom)', text, re.IGNORECASE)
+    bath_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:bath|bathroom)', text, re.IGNORECASE)
+    if bed_match:
+        result["bedrooms"] = int(bed_match.group(1))
+    if bath_match:
+        result["bathrooms"] = float(bath_match.group(1))
+    
+    sqft_match = re.search(r'([\d,]+)\s*(?:sq\.?\s*ft|square\s*feet)', text, re.IGNORECASE)
+    if sqft_match:
+        result["square_feet"] = int(sqft_match.group(1).replace(',', ''))
+    
+    return result
 
 
 class ScrapePropertyPageInput(BaseModel):
@@ -17,48 +238,51 @@ class ScrapePropertyPageInput(BaseModel):
 
 
 @tool("scrape_property_page", args_schema=ScrapePropertyPageInput)
+@cached(ttl=3600, prefix="scraped_property")  # Cache for 1 hour
+@retry_on_http_error(max_attempts=3)
 def scrape_property_page(url: str, source: Optional[str] = None) -> dict:
     """
     Scrape property data from a real estate listing page.
     Extracts property details like address, price, bedrooms, bathrooms, etc.
     
-    Note: This is a basic scraper. For production, use Bright Data MCP for better reliability.
+    Uses ScraperAPI if configured for reliable scraping with anti-bot protection.
+    Falls back to direct requests if ScraperAPI is not available.
     """
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        
-        response = requests.get(url, headers=headers, timeout=15)
+        # Use ScraperAPI if available, otherwise direct request
+        response = _scrape_with_scraperapi(url)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Basic extraction (this is simplified - real implementation would be more sophisticated)
-        # In production, use Bright Data MCP or specialized parsers
-        result = {
-            "url": url,
-            "source": source or "unknown",
-            "title": soup.find('title').text if soup.find('title') else None,
-            "raw_html_length": len(response.content),
-            "note": "This is a basic scraper. For production use, integrate Bright Data MCP for better reliability and anti-bot protection."
-        }
+        # Detect source from URL if not provided
+        if not source:
+            if 'zillow.com' in url.lower():
+                source = "zillow"
+            elif 'realtor.com' in url.lower():
+                source = "realtor"
+            elif 'redfin.com' in url.lower():
+                source = "redfin"
+            else:
+                source = "generic"
         
-        # Try to extract common property data patterns
-        # This is a placeholder - real implementation would use site-specific parsers
-        text_content = soup.get_text()
+        # Parse based on source
+        if source.lower() == "zillow":
+            result = _parse_zillow(soup, url)
+        elif source.lower() == "realtor":
+            result = _parse_realtor(soup, url)
+        elif source.lower() == "redfin":
+            result = _parse_redfin(soup, url)
+        else:
+            result = _parse_generic(soup, url)
         
-        # Look for price patterns
-        import re
-        price_patterns = [
-            r'\$[\d,]+',
-            r'[\d,]+\s*dollars?',
-        ]
-        for pattern in price_patterns:
-            matches = re.findall(pattern, text_content, re.IGNORECASE)
-            if matches:
-                result["potential_prices"] = matches[:5]
-                break
+        # Add metadata
+        result["scraping_method"] = "scraperapi" if settings.scraperapi_key else "direct"
+        result["raw_html_length"] = len(response.content)
+        
+        # Add note if ScraperAPI not configured
+        if not settings.scraperapi_key:
+            result["note"] = "Using direct scraping. Configure SCRAPERAPI_KEY for better reliability and anti-bot protection."
         
         return result
         
@@ -67,7 +291,7 @@ def scrape_property_page(url: str, source: Optional[str] = None) -> dict:
         return {
             "error": f"Failed to scrape page: {str(e)}",
             "url": url,
-            "suggestion": "Use Bright Data MCP for reliable web scraping with anti-bot protection"
+            "suggestion": "Configure SCRAPERAPI_KEY for reliable web scraping with anti-bot protection. Get key at https://www.scraperapi.com/"
         }
     except Exception as e:
         logger.error(f"Unexpected scraping error: {e}")
@@ -85,57 +309,41 @@ class ExtractPropertyDataInput(BaseModel):
 
 
 @tool("extract_property_data", args_schema=ExtractPropertyDataInput)
+@cached(ttl=3600, prefix="extracted_property")  # Cache for 1 hour
 def extract_property_data(html_content: str, source: str, url: Optional[str] = None) -> dict:
     """
     Extract structured property data from HTML content.
     Returns JSON with property details in snake_case format.
+    
+    Uses site-specific parsers for better accuracy.
     """
     try:
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # This is a simplified extractor
-        # In production, use site-specific parsers or LLM-based extraction
-        result = {
-            "address": None,
-            "price": None,
-            "bedrooms": None,
-            "bathrooms": None,
-            "square_feet": None,
-            "lot_size": None,
-            "year_built": None,
-            "property_type": None,
-            "listing_agent": None,
-            "days_on_market": None,
-            "mls_number": None,
-            "description": None,
-            "image_urls": [],
-            "neighborhood": None,
-            "source": source,
-            "url": url,
-            "extraction_method": "basic_html_parsing",
-            "note": "For production, use Bright Data MCP or LLM-based extraction for better accuracy"
-        }
+        # Use site-specific parser
+        if source.lower() == "zillow":
+            result = _parse_zillow(soup, url or "")
+        elif source.lower() == "realtor":
+            result = _parse_realtor(soup, url or "")
+        elif source.lower() == "redfin":
+            result = _parse_redfin(soup, url or "")
+        else:
+            result = _parse_generic(soup, url or "")
         
-        # Basic extraction logic (placeholder)
+        # Add extraction metadata
+        result["extraction_method"] = "site_specific_parsing"
+        result["source"] = source
+        
+        # Try to extract description
+        desc_elem = soup.find('meta', attrs={"name": "description"}) or soup.find(class_=re.compile(r'description', re.I))
+        if desc_elem:
+            result["description"] = desc_elem.get('content') or desc_elem.get_text()[:500]
+        
+        # Try to extract property type
         text = soup.get_text()
-        
-        # Try to find common patterns
-        import re
-        
-        # Price
-        price_match = re.search(r'\$([\d,]+)', text)
-        if price_match:
-            result["price"] = price_match.group(0)
-        
-        # Bedrooms
-        bed_match = re.search(r'(\d+)\s*(?:bed|bedroom)', text, re.IGNORECASE)
-        if bed_match:
-            result["bedrooms"] = int(bed_match.group(1))
-        
-        # Bathrooms
-        bath_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:bath|bathroom)', text, re.IGNORECASE)
-        if bath_match:
-            result["bathrooms"] = float(bath_match.group(1))
+        prop_type_match = re.search(r'(single family|condo|townhouse|apartment|multi-family|duplex)', text, re.IGNORECASE)
+        if prop_type_match:
+            result["property_type"] = prop_type_match.group(1).lower()
         
         return result
         
@@ -144,5 +352,6 @@ def extract_property_data(html_content: str, source: str, url: Optional[str] = N
         return {
             "error": f"Failed to extract property data: {str(e)}",
             "source": source,
-            "url": url
+            "url": url,
+            "extraction_method": "error"
         }

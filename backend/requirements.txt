@@ -50,3 +50,6 @@ black==24.4.2
 ruff==0.5.6
 mypy==1.10.1
 aiohttp==3.10.11  # For load testing
+
+# Market Research APIs
+tavily-python>=0.3.0  # For market trends search
