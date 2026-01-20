@@ -4,7 +4,7 @@ import time
 import functools
 from typing import Optional, Dict, Any
 from datetime import datetime
-from config.settings import settings
+from backend.config.settings import settings
 
 logger = logging.getLogger(__name__)
 

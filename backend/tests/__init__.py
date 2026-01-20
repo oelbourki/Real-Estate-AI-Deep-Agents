@@ -1,1 +1,1 @@
-"""Test suite for Enterprise Real Estate AI Agent."""
+"""Test suite for Real Estate AI Deep Agents."""

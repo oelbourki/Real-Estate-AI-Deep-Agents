@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Optional
 from collections import defaultdict
 from threading import Lock
-from utils.cache import get_redis_client
+from backend.utils.cache import get_redis_client
 
 logger = logging.getLogger(__name__)
 

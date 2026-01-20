@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run script for the Enterprise Real Estate AI Agent backend."""
+"""Run script for the Real Estate AI Deep Agents backend."""
 import uvicorn
 from config.settings import settings
 import logging

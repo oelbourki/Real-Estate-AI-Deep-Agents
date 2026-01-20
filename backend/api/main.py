@@ -1,9 +1,9 @@
-"""FastAPI application for Enterprise Real Estate AI Agent."""
+"""FastAPI application for Real Estate AI Deep Agents."""
 from fastapi import FastAPI, HTTPException, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional
 import logging
 import time
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, SystemMessage
@@ -13,7 +13,7 @@ from config.settings import settings
 from api.middleware import rate_limit_middleware, monitoring_middleware, error_handling_middleware
 from api.schemas import (
     ChatRequest, ChatResponse, LangGraphChatResponse, PropertySearchRequest, PropertySearchResponse,
-    HealthResponse, MetricsResponse, ThreadCreateRequest, ThreadResponse, RunCreateRequest, RunResponse
+    HealthResponse, MetricsResponse
 )
 from utils.message_serializer import serialize_messages
 from utils.monitoring import setup_langsmith, metrics_collector
@@ -32,7 +32,7 @@ setup_langsmith()
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Enterprise Real Estate AI Agent",
+    title="Real Estate AI Deep Agents",
     description="Enterprise-level real estate AI solution with DeepAgents and LangGraph",
     version="1.0.0",
     docs_url="/docs",
@@ -107,73 +107,20 @@ async def get_metrics():
 async def root():
     """Root endpoint."""
     return {
-        "name": "Enterprise Real Estate AI Agent",
+        "name": "Real Estate AI Deep Agents",
         "version": "1.0.0",
         "status": "operational",
         "docs": "/docs"
     }
 
 
-# LangGraph Platform API - Info endpoint (required by agent-chat-ui)
-@app.get("/info", tags=["langgraph"])
-async def info():
-    """
-    Server information endpoint required by agent-chat-ui.
-    Returns basic server metadata to verify connectivity.
-    """
-    return {
-        "name": "Enterprise Real Estate AI Agent",
-        "version": "1.0.0",
-        "status": "operational",
-        "langgraph_version": "1.0.0"
-    }
-
-
-# LangGraph Platform API - Thread search endpoint (required by agent-chat-ui)
-@app.post("/threads/search", tags=["langgraph"])
-@app.get("/threads/search", tags=["langgraph"])
-async def search_threads(request: Request):
-    """
-    Search for threads. Required by agent-chat-ui for thread management.
-    
-    Returns a list of available threads. For now, returns empty list as we
-    don't have a thread storage system yet.
-    """
-    try:
-        # For now, return empty list
-        # In production, you'd query your thread storage/database
-        return {
-            "threads": [],
-            "total": 0
-        }
-    except Exception as e:
-        logger.error(f"Error searching threads: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error searching threads: {str(e)}")
-
-
-# LangGraph Platform API - Direct thread creation (alternative endpoint used by agent-chat-ui)
-@app.post("/threads", tags=["langgraph"])
-async def create_thread_direct(request: Optional[Dict[str, Any]] = Body(default={})):
-    """
-    Create a new thread directly. Alternative endpoint used by agent-chat-ui.
-    This is a convenience endpoint that creates a thread without requiring assistant_id in the path.
-    """
-    try:
-        # Generate a new thread ID
-        thread_id = f"thread_{int(time.time() * 1000)}"
-        
-        metadata = request.get("metadata", {}) if request else {}
-        
-        logger.info(f"Created new thread {thread_id} via /threads endpoint")
-        
-        return {
-            "thread_id": thread_id,
-            "metadata": metadata,
-            "created_at": time.time()
-        }
-    except Exception as e:
-        logger.error(f"Error creating thread: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error creating thread: {str(e)}")
+# Note: LangGraph Platform API endpoints are now provided by langgraph dev server
+# Use 'langgraph dev' to get all endpoints automatically:
+# - /assistants/{assistant_id}/threads
+# - /assistants/{assistant_id}/threads/{thread_id}/runs
+# - /assistants/{assistant_id}/threads/{thread_id}/runs/stream
+# - /info, /threads/search, etc.
+# See langgraph.json for configuration
 
 
 # Main chat endpoint
@@ -378,307 +325,24 @@ async def search_properties(
 
 
 # ============================================================================
-# LangGraph Platform API Compatibility Endpoints
-# These endpoints allow agent-chat-ui to work with our backend
+# LangGraph Platform API Endpoints
 # ============================================================================
-
-@app.post(
-    "/assistants/{assistant_id}/threads",
-    response_model=ThreadResponse,
-    tags=["langgraph"],
-    summary="Create a new thread",
-    description="Create a new conversation thread for the assistant. Returns thread_id for use in subsequent requests."
-)
-async def create_thread(assistant_id: str, request: ThreadCreateRequest = Body(...)):
-    """
-    Create a new thread for the assistant.
-    
-    Args:
-        assistant_id: Assistant/Graph ID (currently ignored, using default agent)
-        request: Thread creation request with optional metadata
-        
-    Returns:
-        Thread response with thread_id
-    """
-    try:
-        # Generate a new thread ID
-        thread_id = f"thread_{int(time.time() * 1000)}"
-        
-        logger.info(f"Created new thread {thread_id} for assistant {assistant_id}")
-        
-        return ThreadResponse(
-            thread_id=thread_id,
-            metadata=request.metadata or {},
-            created_at=time.time()
-        )
-    except Exception as e:
-        logger.error(f"Error creating thread: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error creating thread: {str(e)}")
-
-
-@app.get(
-    "/assistants/{assistant_id}/threads/{thread_id}",
-    tags=["langgraph"],
-    summary="Get thread state",
-    description="Retrieve the current state of a thread, including message history."
-)
-async def get_thread(assistant_id: str, thread_id: str):
-    """
-    Get thread state including message history.
-    
-    Args:
-        assistant_id: Assistant/Graph ID
-        thread_id: Thread ID
-        
-    Returns:
-        Thread state with messages
-    """
-    try:
-        # Get the agent to retrieve thread state
-        agent = get_main_agent()
-        
-        # Prepare config to read thread state
-        config = {
-            "configurable": {"thread_id": thread_id},
-            "recursion_limit": 100
-        }
-        
-        # Try to get existing state (this will work if thread exists in checkpointer)
-        # For now, we'll return empty state if thread doesn't exist
-        try:
-            # Use astream_events or get_state if available
-            # For simplicity, return basic structure
-            return {
-                "thread_id": thread_id,
-                "assistant_id": assistant_id,
-                "messages": [],
-                "metadata": {}
-            }
-        except Exception:
-            # Thread doesn't exist yet, return empty state
-            return {
-                "thread_id": thread_id,
-                "assistant_id": assistant_id,
-                "messages": [],
-                "metadata": {}
-            }
-    except Exception as e:
-        logger.error(f"Error getting thread: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error getting thread: {str(e)}")
-
-
-@app.post(
-    "/assistants/{assistant_id}/threads/{thread_id}/runs",
-    response_model=RunResponse,
-    tags=["langgraph"],
-    summary="Create a run (non-streaming)",
-    description="Create and execute a run in the thread. Returns the complete result after execution."
-)
-async def create_run(assistant_id: str, thread_id: str, request: RunCreateRequest):
-    """
-    Create a run in a thread (non-streaming).
-    
-    Args:
-        assistant_id: Assistant/Graph ID
-        thread_id: Thread ID
-        request: Run creation request with input messages
-        
-    Returns:
-        Run response with results
-    """
-    try:
-        run_id = f"run_{int(time.time() * 1000)}"
-        created_at = time.time()
-        
-        # Extract messages from input
-        input_data = request.input
-        messages_data = input_data.get("messages", [])
-        
-        if not messages_data:
-            raise HTTPException(status_code=400, detail="Input must contain 'messages' array")
-        
-        # Convert messages to LangChain format
-        langchain_messages = []
-        for msg in messages_data:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            
-            if role == "user" or role == "human":
-                langchain_messages.append(HumanMessage(content=content))
-            elif role == "assistant" or role == "ai":
-                langchain_messages.append(AIMessage(content=content))
-            elif role == "system":
-                langchain_messages.append(SystemMessage(content=content))
-        
-        # Get the main agent
-        agent = get_main_agent()
-        
-        # Prepare config
-        config = {
-            "configurable": {"thread_id": thread_id},
-            "recursion_limit": 100
-        }
-        
-        # Create state with new messages
-        state = {"messages": langchain_messages}
-        
-        logger.info(f"Creating run {run_id} in thread {thread_id}")
-        
-        # Invoke the agent
-        result = agent.invoke(state, config=config)
-        
-        # Serialize messages for response
-        if result and "messages" in result:
-            serialized_messages = serialize_messages(result["messages"])
-            output = {"messages": serialized_messages}
-        else:
-            output = {"messages": []}
-        
-        completed_at = time.time()
-        
-        return RunResponse(
-            run_id=run_id,
-            thread_id=thread_id,
-            assistant_id=assistant_id,
-            status="completed",
-            input=input_data,
-            output=output,
-            created_at=created_at,
-            completed_at=completed_at
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error creating run: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error creating run: {str(e)}")
-
-
-@app.post(
-    "/assistants/{assistant_id}/threads/{thread_id}/runs/stream",
-    tags=["langgraph"],
-    summary="Create and stream a run",
-    description="Create a run and stream results as Server-Sent Events (SSE). This is the endpoint agent-chat-ui uses for streaming."
-)
-async def create_and_stream_run(assistant_id: str, thread_id: str, request: RunCreateRequest):
-    """
-    Create a run and stream results using Server-Sent Events (SSE).
-    
-    Args:
-        assistant_id: Assistant/Graph ID
-        thread_id: Thread ID
-        request: Run creation request with input messages
-        
-    Returns:
-        StreamingResponse with SSE events
-    """
-    import json
-    import asyncio
-    
-    async def generate_stream():
-        """Generate SSE stream events."""
-        run_id = f"run_{int(time.time() * 1000)}"
-        
-        try:
-            # Send start event
-            yield f"data: {json.dumps({'event': 'start', 'run_id': run_id})}\n\n"
-            
-            # Extract messages from input
-            input_data = request.input
-            messages_data = input_data.get("messages", [])
-            
-            if not messages_data:
-                yield f"data: {json.dumps({'event': 'error', 'error': 'Input must contain messages array'})}\n\n"
-                return
-            
-            # Convert messages to LangChain format
-            langchain_messages = []
-            for msg in messages_data:
-                role = msg.get("role", "user")
-                content = msg.get("content", "")
-                
-                if role == "user" or role == "human":
-                    langchain_messages.append(HumanMessage(content=content))
-                elif role == "assistant" or role == "ai":
-                    langchain_messages.append(AIMessage(content=content))
-                elif role == "system":
-                    langchain_messages.append(SystemMessage(content=content))
-            
-            # Get the main agent
-            agent = get_main_agent()
-            
-            # Prepare config
-            config = {
-                "configurable": {"thread_id": thread_id},
-                "recursion_limit": 100
-            }
-            
-            # Create state
-            state = {"messages": langchain_messages}
-            
-            # Try to use streaming if available
-            try:
-                # Use astream for real streaming
-                async for event in agent.astream(state, config=config):
-                    # Send update events
-                    if "messages" in event:
-                        serialized = serialize_messages(event["messages"])
-                        yield f"data: {json.dumps({'event': 'update', 'data': {'messages': serialized}})}\n\n"
-                    else:
-                        yield f"data: {json.dumps({'event': 'update', 'data': event})}\n\n"
-            except AttributeError:
-                # Fallback to invoke if astream not available
-                result = agent.invoke(state, config=config)
-                if result and "messages" in result:
-                    serialized = serialize_messages(result["messages"])
-                    yield f"data: {json.dumps({'event': 'update', 'data': {'messages': serialized}})}\n\n"
-            
-            # Send end event
-            yield f"data: {json.dumps({'event': 'end', 'run_id': run_id})}\n\n"
-            
-        except Exception as e:
-            logger.error(f"Error in stream: {e}", exc_info=True)
-            yield f"data: {json.dumps({'event': 'error', 'error': str(e)})}\n\n"
-    
-    return StreamingResponse(
-        generate_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
-        }
-    )
-
-
-@app.get(
-    "/assistants/{assistant_id}/threads/{thread_id}/runs/{run_id}/stream",
-    tags=["langgraph"],
-    summary="Stream existing run results",
-    description="Stream results from an existing run as Server-Sent Events (SSE)."
-)
-async def stream_run(assistant_id: str, thread_id: str, run_id: str):
-    """
-    Stream results from an existing run.
-    
-    Note: This is a placeholder. In production, you'd retrieve the run state
-    and stream it. For now, returns a simple stream.
-    """
-    import json
-    
-    async def generate_stream():
-        yield f"data: {json.dumps({'event': 'info', 'message': 'Run streaming not fully implemented for GET endpoint. Use POST /runs/stream instead.'})}\n\n"
-        yield f"data: {json.dumps({'event': 'end'})}\n\n"
-    
-    return StreamingResponse(
-        generate_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
-        }
-    )
+# 
+# All LangGraph Platform API endpoints are now provided by 'langgraph dev' server.
+# 
+# To use them:
+# 1. Install: pip install -U "langgraph-cli[inmem]"
+# 2. Run: langgraph dev
+# 3. Server starts on http://localhost:2024
+# 
+# Endpoints automatically available:
+# - /assistants/{assistant_id}/threads
+# - /assistants/{assistant_id}/threads/{thread_id}/runs
+# - /assistants/{assistant_id}/threads/{thread_id}/runs/stream
+# - /info, /threads/search, etc.
+# 
+# See langgraph.json for configuration.
+# ============================================================================
 
 
 if __name__ == "__main__":

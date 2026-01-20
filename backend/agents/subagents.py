@@ -1,37 +1,32 @@
 """Subagent definitions for specialized real estate tasks."""
 from typing import List
 from deepagents.middleware.subagents import SubAgent
-from config.subagent_prompts import (
-    PROPERTY_RESEARCH_AGENT_PROMPT,
-    LOCATION_ANALYSIS_AGENT_PROMPT,
-    FINANCIAL_ANALYSIS_AGENT_PROMPT
-)
-from tools.realty_us import realty_us_search_buy, realty_us_search_rent
-from tools.location import (
-    geocode_address,
-    osm_poi_search,
-    osm_route,
-    find_nearby_amenities
-)
-from tools.financial import (
-    calculate_roi,
-    estimate_mortgage,
-    calculate_property_tax,
-    compare_properties
-)
-from tools.web_scraping import scrape_property_page, extract_property_data
-from tools.market_research import (
-    search_market_trends,
-    get_price_history,
-    compare_markets
-)
-from config.subagent_prompts import (
+from backend.config.subagent_prompts import (
     PROPERTY_RESEARCH_AGENT_PROMPT,
     LOCATION_ANALYSIS_AGENT_PROMPT,
     FINANCIAL_ANALYSIS_AGENT_PROMPT,
     DATA_EXTRACTION_AGENT_PROMPT,
     MARKET_TRENDS_AGENT_PROMPT,
     REPORT_GENERATOR_AGENT_PROMPT,
+)
+from backend.tools.realty_us import realty_us_search_buy, realty_us_search_rent
+from backend.tools.location import (
+    geocode_address,
+    osm_poi_search,
+    osm_route,
+    find_nearby_amenities
+)
+from backend.tools.financial import (
+    calculate_roi,
+    estimate_mortgage,
+    calculate_property_tax,
+    compare_properties
+)
+from backend.tools.web_scraping import scrape_property_page, extract_property_data
+from backend.tools.market_research import (
+    search_market_trends,
+    get_price_history,
+    compare_markets
 )
 import logging
 

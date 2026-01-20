@@ -1,6 +1,15 @@
 """Application configuration settings."""
 from pydantic_settings import BaseSettings
 from typing import List
+import os
+from pathlib import Path
+
+# Get the backend directory (where this file is located)
+# __file__ is: backend/config/settings.py
+# .parent is: backend/config
+# .parent.parent is: backend
+BACKEND_DIR = Path(__file__).parent.parent.resolve()  # Use resolve() to get absolute path
+ENV_FILE = BACKEND_DIR / ".env"
 
 
 class Settings(BaseSettings):
@@ -61,7 +70,9 @@ class Settings(BaseSettings):
     langchain_project: str = "enterprise-real-estate-ai"
     
     class Config:
-        env_file = ".env"
+        # Use absolute path to ensure .env is found regardless of working directory
+        # This is critical when langgraph dev runs from project root
+        env_file = str(ENV_FILE)  # ENV_FILE is already absolute (from resolve())
         case_sensitive = False
 
 

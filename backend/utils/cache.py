@@ -5,7 +5,7 @@ import hashlib
 import logging
 from typing import Optional, Any
 from functools import wraps
-from config.settings import settings
+from backend.config.settings import settings
 import pickle
 
 logger = logging.getLogger(__name__)

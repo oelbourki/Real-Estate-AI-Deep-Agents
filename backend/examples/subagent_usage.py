@@ -1,5 +1,5 @@
 """
-Example usage of subagents in the Enterprise Real Estate AI Agent.
+Example usage of subagents in the Real Estate AI Deep Agents.
 
 This file demonstrates how the main agent delegates tasks to subagents.
 """

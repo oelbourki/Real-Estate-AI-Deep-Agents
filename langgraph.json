@@ -1,0 +1,10 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "real-estate-agent": {
+      "path": "backend.agents.main_agent:get_main_agent",
+      "description": "Real Estate AI Deep Agents powered by DeepAgents and LangGraph"
+    }
+  },
+  "env": "backend/.env"
+}

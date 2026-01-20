@@ -3,9 +3,9 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
 import requests
-from config.settings import settings
-from utils.retry import retry_on_http_error
-from utils.cache import cached
+from backend.config.settings import settings
+from backend.utils.retry import retry_on_http_error
+from backend.utils.cache import cached
 
 
 class RealtyUSSearchBuyInput(BaseModel):

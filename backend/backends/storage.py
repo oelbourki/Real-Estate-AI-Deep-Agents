@@ -1,6 +1,6 @@
 """Storage backend configuration."""
 from deepagents.backends import FilesystemBackend, CompositeBackend
-from config.settings import settings
+from backend.config.settings import settings
 import logging
 import os
 

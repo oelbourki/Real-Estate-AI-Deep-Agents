@@ -125,34 +125,6 @@ class MetricsResponse(BaseModel):
     error_rate: float
 
 
-# LangGraph Platform API Compatibility Schemas
-class ThreadCreateRequest(BaseModel):
-    """Request to create a new thread."""
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Optional thread metadata")
-
-
-class ThreadResponse(BaseModel):
-    """Thread response schema."""
-    thread_id: str = Field(..., description="Thread ID")
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Thread metadata")
-    created_at: Optional[float] = Field(default_factory=time.time, description="Creation timestamp")
-
-
-class RunCreateRequest(BaseModel):
-    """Request to create a run."""
-    input: Dict[str, Any] = Field(..., description="Input for the run, typically contains 'messages'")
-    stream_mode: Optional[str] = Field("updates", description="Streaming mode: 'updates', 'values', or 'messages'")
-    config: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Run configuration")
-
-
-class RunResponse(BaseModel):
-    """Run response schema."""
-    run_id: str = Field(..., description="Run ID")
-    thread_id: str = Field(..., description="Thread ID")
-    assistant_id: str = Field(..., description="Assistant ID")
-    status: str = Field(..., description="Run status: 'pending', 'running', 'completed', 'failed'")
-    input: Dict[str, Any] = Field(..., description="Run input")
-    output: Optional[Dict[str, Any]] = Field(None, description="Run output")
-    error: Optional[str] = Field(None, description="Error message if failed")
-    created_at: float = Field(default_factory=time.time, description="Creation timestamp")
-    completed_at: Optional[float] = Field(None, description="Completion timestamp")
+# Note: LangGraph Platform API schemas (ThreadCreateRequest, ThreadResponse, RunCreateRequest, RunResponse)
+# are no longer needed as langgraph dev provides all endpoints automatically.
+# See langgraph.json for configuration.

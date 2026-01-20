@@ -7,20 +7,20 @@ except ImportError:
     # Fallback for older versions
     from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import MemorySaver
-from config.settings import settings
+from backend.config.settings import settings
 try:
     from langchain_ollama import ChatOllama
     OLLAMA_AVAILABLE = True
 except ImportError:
     OLLAMA_AVAILABLE = False
     ChatOllama = None
-from config.prompts import MAIN_AGENT_SYSTEM_PROMPT
-from tools.realty_us import realty_us_search_buy, realty_us_search_rent
-from agents.subagents import get_subagents
-from backends.storage import get_backend
-from backends.memory import get_memory_paths
-from utils.monitoring import setup_langsmith
-from config.hitl_config import get_hitl_config
+from backend.config.prompts import MAIN_AGENT_SYSTEM_PROMPT
+from backend.tools.realty_us import realty_us_search_buy, realty_us_search_rent
+from backend.agents.subagents import get_subagents
+from backend.backends.storage import get_backend
+from backend.backends.memory import get_memory_paths
+from backend.utils.monitoring import setup_langsmith
+from backend.config.hitl_config import get_hitl_config
 import logging
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ def create_main_agent():
     try:
         model = None
         model_initialized = False
-        
+        print(f"OpenRouter API key: {settings.openrouter_api_key}")
         # Try OpenRouter first (default, unified API for 300+ models)
         if settings.openrouter_api_key:
             try:
@@ -53,7 +53,7 @@ def create_main_agent():
                     base_url=settings.openrouter_base_url,
                     default_headers={
                         "HTTP-Referer": "https://github.com/your-repo",  # Optional: for analytics
-                        "X-Title": "Enterprise Real Estate AI Agent"  # Optional: for analytics
+                        "X-Title": "Real Estate AI Deep Agents"  # Optional: for analytics
                     }
                 )
                 logger.info(f"✅ Initialized OpenRouter model: {openrouter_model} at {settings.openrouter_base_url}")
