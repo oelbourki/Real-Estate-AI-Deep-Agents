@@ -15,8 +15,8 @@
 </div>
 
 <div align="center">
-  <img src="assets/complete_architecture.png" alt="Real Estate AI Deep Agents Architecture" width="800"/>
-  <p><em>Multi-Agent Architecture Overview</em></p>
+  <img src="assets/msedge_PRrDGDBokM.png" alt="Real Estate AI Deep Agents" width="800"/>
+  <p><em>Real Estate AI Deep Agents Chat Interface</em></p>
 </div>
 
 ---
@@ -71,19 +71,12 @@ The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI syste
 
 ## 🏗️ Architecture
 
-<div align="center">
-  <img src="assets/msedge_PRrDGDBokM.png" alt="System Architecture Diagram" width="900"/>
-  <p><em>Complete System Architecture</em></p>
-</div>
-
 ### LangGraph Architecture
 
 The system is built on **LangGraph StateGraph** for state management and agent orchestration. Below are two visualizations:
 
 1. **Complete Architecture** - Shows all subagents, tools, and connections
-2. **LangGraph Internal Structure** - Generated using LangGraph's built-in `draw_mermaid_png()` method
-
-#### Complete Architecture (All Subagents)
+2. **LangGraph Internal Structure**
 
 <div align="center">
   <img src="assets/complete_architecture.png" alt="Complete Architecture with All Subagents" width="1000" onerror="this.style.display='none'"/>
@@ -91,168 +84,27 @@ The system is built on **LangGraph StateGraph** for state management and agent o
   <p><small>💡 To generate this PNG: <code>python backend/scripts/mermaid_to_png.py</code> or use <code>mmdc -i docs/complete_architecture.mmd -o assets/complete_architecture.png</code></small></p>
 </div>
 
-```mermaid
----
-config:
-  flowchart:
-    curve: linear
-    padding: 20
----
-graph TB
-    Start([User Query]) --> UI{User Interface}
-    UI -->|HTTP/WebSocket| API[FastAPI Backend<br/>LangGraph Platform API]
-    
-    API --> MainAgent[Main Orchestrator Agent<br/>DeepAgents + LangGraph StateGraph]
-    
-    MainAgent --> Decision{Query Analysis}
-    
-    Decision -->|Simple Query| DirectTools[Direct Tools]
-    Decision -->|Complex Query| SubagentRouter[Subagent Router]
-    
-    DirectTools --> Tool1[realty_us_search_buy]
-    DirectTools --> Tool2[realty_us_search_rent]
-    
-    SubagentRouter --> SubAgent1[Property Research Agent]
-    SubagentRouter --> SubAgent2[Location Analysis Agent]
-    SubagentRouter --> SubAgent3[Financial Analysis Agent]
-    SubagentRouter --> SubAgent4[Data Extraction Agent]
-    SubagentRouter --> SubAgent5[Market Trends Agent]
-    SubagentRouter --> SubAgent6[Report Generator Agent]
-    
-    SubAgent1 --> Tool1
-    SubAgent1 --> Tool2
-    
-    SubAgent2 --> Tool3[geocode_address]
-    SubAgent2 --> Tool4[osm_poi_search]
-    SubAgent2 --> Tool5[osm_route]
-    SubAgent2 --> Tool6[find_nearby_amenities]
-    
-    SubAgent3 --> Tool7[calculate_roi]
-    SubAgent3 --> Tool8[estimate_mortgage]
-    SubAgent3 --> Tool9[calculate_property_tax]
-    SubAgent3 --> Tool10[compare_properties]
-    
-    SubAgent4 --> Tool11[scrape_property_page]
-    SubAgent4 --> Tool12[extract_property_data]
-    
-    SubAgent5 --> Tool13[search_market_trends]
-    SubAgent5 --> Tool14[get_price_history]
-    SubAgent5 --> Tool15[compare_markets]
-    
-    SubAgent6 --> FileSystem[Filesystem Backend<br/>Report Generation]
-    
-    Tool1 --> API1[RealtyUS API<br/>via RapidAPI]
-    Tool2 --> API1
-    Tool3 --> API2[OpenStreetMap<br/>Nominatim]
-    Tool4 --> API2
-    Tool5 --> API3[OpenRouteService<br/>Route Calculation]
-    Tool6 --> API2
-    Tool11 --> API4[Web Scraping<br/>Zillow/Realtor/Redfin]
-    Tool12 --> API4
-    
-    MainAgent --> StateGraph[LangGraph StateGraph]
-    StateGraph --> Memory[MemorySaver<br/>Conversation Memory]
-    StateGraph --> Storage[Composite Backend<br/>Filesystem Storage]
-    StateGraph --> LLM[LLM Provider<br/>OpenRouter/Ollama/OpenAI/etc]
-    
-    MainAgent --> Response[Response Synthesis]
-    Response --> UI
-    
-    style MainAgent fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
-    style StateGraph fill:#7B68EE,stroke:#5A4FCF,stroke-width:2px,color:#fff
-    style SubagentRouter fill:#50C878,stroke:#2E8B57,stroke-width:2px,color:#fff
-    style DirectTools fill:#FF6B6B,stroke:#CC5555,stroke-width:2px,color:#fff
-    style LLM fill:#FFA500,stroke:#CC8500,stroke-width:2px,color:#fff
-    style SubAgent1 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
-    style SubAgent2 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
-    style SubAgent3 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
-    style SubAgent4 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
-    style SubAgent5 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
-    style SubAgent6 fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
-    style API1 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
-    style API2 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
-    style API3 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
-    style API4 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
-```
+<!-- <div align="center">
+  <img src="assets/complete_architecture.png" alt="System Architecture Diagram" width="900"/>
+  <p><em>Complete System Architecture</em></p>
+</div> -->
+
+
+
+<!-- #### Complete Architecture (All Subagents)
+
+<div align="center">
+  <img src="assets/complete_architecture.png" alt="Complete Architecture with All Subagents" width="1000" onerror="this.style.display='none'"/>
+  <p><em>Complete System Architecture with All 6 Subagents and Tools</em></p>
+  <p><small>💡 To generate this PNG: <code>python backend/scripts/mermaid_to_png.py</code> or use <code>mmdc -i docs/complete_architecture.mmd -o assets/complete_architecture.png</code></small></p>
+</div> -->
 
 #### LangGraph Internal Structure
 
 <div align="center">
   <img src="assets/langgraph_architecture.png" alt="LangGraph Internal Structure" width="900" onerror="this.style.display='none'"/>
-  <p><em>LangGraph StateGraph Internal Structure (Generated using LangGraph's draw_mermaid_png())</em></p>
+  <p><em>LangGraph StateGraph Internal Structure</em></p>
 </div>
-
-> **Note**: To generate these visualizations, run:
-> - `python backend/scripts/visualize_complete_architecture.py` - Complete architecture with all subagents
-> - `python backend/scripts/visualize_architecture.py` - LangGraph internal structure only
-
-```mermaid
-graph TB
-    Start([User Query]) --> UI{User Interface}
-    UI -->|HTTP Request| API[FastAPI Backend]
-    UI -->|WebSocket| LangGraphAPI[LangGraph Platform API]
-    
-    API --> MainAgent[Main Orchestrator Agent<br/>DeepAgents + LangGraph]
-    LangGraphAPI --> MainAgent
-    
-    MainAgent --> Decision{Query Type?}
-    
-    Decision -->|Simple Query| DirectTools[Direct Tools]
-    Decision -->|Complex Query| SubagentDelegation[Subagent Delegation]
-    
-    DirectTools --> Tool1[realty_us_search_buy]
-    DirectTools --> Tool2[realty_us_search_rent]
-    
-    SubagentDelegation --> SubAgent1[Property Research Agent]
-    SubagentDelegation --> SubAgent2[Location Analysis Agent]
-    SubagentDelegation --> SubAgent3[Financial Analysis Agent]
-    SubagentDelegation --> SubAgent4[Data Extraction Agent]
-    SubagentDelegation --> SubAgent5[Market Trends Agent]
-    SubagentDelegation --> SubAgent6[Report Generator Agent]
-    
-    SubAgent1 --> Tool1
-    SubAgent1 --> Tool2
-    
-    SubAgent2 --> Tool3[geocode_address]
-    SubAgent2 --> Tool4[osm_poi_search]
-    SubAgent2 --> Tool5[osm_route]
-    SubAgent2 --> Tool6[find_nearby_amenities]
-    
-    SubAgent3 --> Tool7[calculate_roi]
-    SubAgent3 --> Tool8[estimate_mortgage]
-    SubAgent3 --> Tool9[calculate_property_tax]
-    SubAgent3 --> Tool10[compare_properties]
-    
-    SubAgent4 --> Tool11[scrape_property_page]
-    SubAgent4 --> Tool12[extract_property_data]
-    
-    SubAgent5 --> Tool13[search_market_trends]
-    SubAgent5 --> Tool14[get_price_history]
-    SubAgent5 --> Tool15[compare_markets]
-    
-    SubAgent6 --> FileSystem[Filesystem Backend]
-    
-    Tool1 --> ExternalAPI1[RealtyUS API]
-    Tool2 --> ExternalAPI1
-    Tool3 --> ExternalAPI2[OpenStreetMap]
-    Tool4 --> ExternalAPI2
-    Tool5 --> ExternalAPI3[OpenRouteService]
-    Tool6 --> ExternalAPI2
-    
-    MainAgent --> StateGraph[LangGraph StateGraph]
-    StateGraph --> Memory[MemorySaver<br/>Conversation Memory]
-    StateGraph --> Storage[Composite Backend<br/>Filesystem Storage]
-    StateGraph --> LLM[LLM Provider<br/>OpenRouter/Ollama/etc]
-    
-    MainAgent --> Response[Response Generation]
-    Response --> UI
-    
-    style MainAgent fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
-    style StateGraph fill:#7B68EE,stroke:#5A4FCF,stroke-width:2px,color:#fff
-    style SubagentDelegation fill:#50C878,stroke:#2E8B57,stroke-width:2px,color:#fff
-    style DirectTools fill:#FF6B6B,stroke:#CC5555,stroke-width:2px,color:#fff
-    style LLM fill:#FFA500,stroke:#CC8500,stroke-width:2px,color:#fff
-```
 
 > **Note**: This diagram is generated from the actual LangGraph StateGraph structure. You can visualize the graph programmatically using:
 > ```bash
