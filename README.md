@@ -12,14 +12,8 @@
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [API Reference](#-api-reference)
 
-<!-- </div>
+</div>
 
-<div align="center">
-  <img src="assets/msedge_PRrDGDBokM.png" alt="Real Estate AI Deep Agents" width="800"/>
-  <p><em>Real Estate AI Deep Agents Chat Interface</em></p>
-  <img src="assets/msedge_UA7YCuPTU1.png" alt="Real Estate AI Deep Agents: Financial subagent" width="800"/>
-  <p><em>Financial analysis using subagent</em></p>
-</div> -->
 <div align="center">
   <table>
     <tr>
@@ -39,7 +33,7 @@
 
 ## 📖 Overview
 
-The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI system that helps users search, analyze, and evaluate real estate properties with comprehensive insights. Built on a multi-agent architecture using **DeepAgents** for orchestration and **LangGraph** for state management, it provides intelligent automation for real estate professionals, investors, and homebuyers.
+The **Real Estate AI Deep Agents** is a sophisticated, enterprise-grade AI system that helps users search, analyze, and evaluate real estate properties with comprehensive insights. Built on a multi-agent architecture using **DeepAgents** for orchestration and **LangGraph** for state management, it provides intelligent automation for real estate professionals, investors, and homebuyers.
 
 - 🔍 **Intelligent Property Search**: Search properties for sale or rent across the US
 - 📊 **Financial Analysis**: ROI calculations, mortgage estimates, property tax analysis
@@ -50,7 +44,7 @@ The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI syste
 
 ### Key Highlights
 
-- ✅ **Production-Ready**: Monitoring, caching, rate limiting, error handling, and comprehensive logging
+- ✅ **Enterprise-Grade**: Monitoring, caching, rate limiting, error handling, and comprehensive logging
 - ✅ **Multi-LLM Support**: OpenRouter (default), Ollama, OpenAI, Groq, Anthropic, Google with automatic fallback
 - ✅ **Enterprise Features**: HITL workflows, persistent memory, retry logic, and token management
 - ✅ **Modern Stack**: FastAPI, LangGraph, LangChain v1.0+, TypeScript frontend with Next.js
@@ -120,30 +114,15 @@ The system is built on **LangGraph StateGraph** for state management and agent o
 2. **LangGraph Internal Structure**
 
 <div align="center">
-  <img src="assets/complete_architecture.png" alt="Complete Architecture with All Subagents" width="1000" onerror="this.style.display='none'"/>
+  <img src="assets/complete_architecture.png" alt="Complete Architecture with All Subagents" width="800" onerror="this.style.display='none'"/>
   <p><em>Complete System Architecture with All 6 Subagents and Tools</em></p>
   <p><small>💡 To generate this PNG: <code>python backend/scripts/mermaid_to_png.py</code> or use <code>mmdc -i docs/complete_architecture.mmd -o assets/complete_architecture.png</code></small></p>
 </div>
 
-<!-- <div align="center">
-  <img src="assets/complete_architecture.png" alt="System Architecture Diagram" width="900"/>
-  <p><em>Complete System Architecture</em></p>
-</div> -->
-
-
-
-<!-- #### Complete Architecture (All Subagents)
-
-<div align="center">
-  <img src="assets/complete_architecture.png" alt="Complete Architecture with All Subagents" width="1000" onerror="this.style.display='none'"/>
-  <p><em>Complete System Architecture with All 6 Subagents and Tools</em></p>
-  <p><small>💡 To generate this PNG: <code>python backend/scripts/mermaid_to_png.py</code> or use <code>mmdc -i docs/complete_architecture.mmd -o assets/complete_architecture.png</code></small></p>
-</div> -->
-
 #### LangGraph Internal Structure
 
 <div align="center">
-  <img src="assets/langgraph_architecture.png" alt="LangGraph Internal Structure" width="900" onerror="this.style.display='none'"/>
+  <img src="assets/langgraph_architecture.png" alt="LangGraph Internal Structure" width="800" onerror="this.style.display='none'"/>
   <p><em>LangGraph StateGraph Internal Structure</em></p>
 </div>
 
@@ -654,6 +633,93 @@ Contributions are welcome! Please follow these steps:
 - Verify CORS settings in `backend/config/settings.py`
 
 For more troubleshooting, see [docs/](./docs/).
+
+---
+
+## 🔒 Security
+
+The Real Estate AI Agent implements several security measures to protect user data and API keys:
+
+### Security Features
+
+- **Environment Variables**: All sensitive data (API keys, tokens) stored in environment variables
+- **Input Validation**: Pydantic models validate all API inputs to prevent injection attacks
+- **Rate Limiting**: Per-IP rate limiting prevents abuse and DDoS attacks
+- **CORS Protection**: Configurable CORS settings restrict cross-origin requests
+- **Error Handling**: Graceful error handling prevents information leakage
+
+### Security Best Practices
+
+1. **Never commit `.env` files** - Always use `.env.example` as a template
+2. **Rotate API keys regularly** - Update API keys periodically
+3. **Use HTTPS in production** - Always use encrypted connections
+4. **Monitor API usage** - Watch for unusual patterns or spikes
+5. **Keep dependencies updated** - Regularly update packages for security patches
+
+### Reporting Security Issues
+
+If you discover a security vulnerability, please **do not** open a public issue. Instead, email [otmane.elbourki@gmail.com](mailto:otmane.elbourki@gmail.com) with details.
+
+For detailed security analysis, see [Production Readiness Report](docs/PRODUCTION_READINESS_REPORT.md#2-security-analysis).
+
+---
+
+## ⚠️ Limitations
+
+### Current Limitations
+
+- **Geographic Scope**: Property search limited to US markets only
+- **API Dependencies**: Requires external API keys (RapidAPI, LLM providers)
+- **Rate Limits**: Subject to rate limits of third-party APIs (RapidAPI, OpenRouter, etc.)
+- **Data Freshness**: Property data depends on third-party API updates
+- **Python Version**: Requires Python 3.11 or 3.12 (Python 3.13 has compatibility issues)
+
+### Known Constraints
+
+- **Free Tier Limits**: Free tiers of external APIs have usage restrictions
+- **Scraping Limitations**: Web scraping subject to target site rate limits and terms of service
+- **Memory Storage**: Currently uses filesystem storage (no database for structured data)
+- **Single Instance**: Not yet optimized for horizontal scaling
+
+### Future Improvements
+
+We're actively working on addressing these limitations. Key improvements planned:
+
+**Security & Infrastructure:**
+- 🔐 Implement secrets management (HashiCorp Vault or AWS Secrets Manager)
+- 🔑 Add authentication/authorization (JWT tokens or API keys)
+- 🛡️ Add security headers (CSP, HSTS, X-Frame-Options)
+- 🔍 Automated dependency vulnerability scanning
+
+**CI/CD & Testing:**
+- 🚀 Set up GitHub Actions CI/CD pipeline
+- ✅ Increase test coverage to 80%+ (currently ~30%)
+- 🧪 Add integration and E2E tests
+- 🔧 Add pre-commit hooks for code quality
+
+**Performance & Scalability:**
+- ⚡ Fix all blocking operations (async/await optimizations)
+- 🔄 Implement HTTP connection pooling
+- 📊 Add request queuing (Celery or similar)
+- ⚖️ Implement load balancing and auto-scaling
+
+**Monitoring & Observability:**
+- 📝 Centralized logging with log aggregation (ELK Stack)
+- 📈 APM integration (New Relic, Datadog, or Sentry)
+- 📊 Monitoring dashboards (Grafana)
+- 🚨 Alerting system (PagerDuty or Opsgenie)
+
+**Deployment & DevOps:**
+- 🐳 Automated Docker image building and registry
+- 🌍 Staging environment setup
+- 🔄 Blue-green deployment strategy
+- 📦 Infrastructure as Code (Terraform or CloudFormation)
+- 💾 Automated backup strategy
+
+**Database & Storage:**
+- 🗄️ Add PostgreSQL for structured data
+- 📊 Database connection pooling
+- 🔄 Data migration system (Alembic)
 
 ---
 
