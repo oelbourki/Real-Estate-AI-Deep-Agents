@@ -300,10 +300,22 @@ Get your RapidAPI key from [RapidAPI Hub](https://rapidapi.com/hub) and subscrib
 ### Optional Configuration
 
 - **Redis**: `REDIS_URL=redis://localhost:6379/0` (for caching)
-- **LangSmith**: For monitoring and debugging
+- **LangSmith**: For monitoring and debugging - See [LangSmith Setup Guide](docs/LANGSMITH_SETUP.md)
 - **Token Limits**: `ENABLE_TOKEN_LIMITS=true`, `MAX_TOKENS_PER_REQUEST=100000`
 
 See `backend/.env.example` for all available options.
+
+#### Quick LangSmith Setup
+
+1. Sign up at [https://smith.langchain.com/](https://smith.langchain.com/)
+2. Get your API key from Settings → API Keys
+3. Add to `backend/.env`:
+   ```bash
+   LANGCHAIN_TRACING_V2=true
+   LANGCHAIN_API_KEY=your-api-key-here
+   LANGCHAIN_PROJECT=real-estate-ai-agent
+   ```
+4. See [docs/LANGSMITH_SETUP.md](docs/LANGSMITH_SETUP.md) for detailed instructions
 
 ---
 

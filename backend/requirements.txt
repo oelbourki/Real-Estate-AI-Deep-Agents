@@ -33,6 +33,7 @@ passlib[bcrypt]==1.7.4
 
 # Logging & Monitoring
 structlog==24.1.0
+langsmith>=0.1.0  # LangSmith for tracing and observability
 
 # Redis for caching (required for Phase 4)
 redis==5.0.1
