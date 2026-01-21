@@ -247,4 +247,4 @@ Thumbs.db
 test_*.py
 !tests/
 
-docs/
+docs-md/
