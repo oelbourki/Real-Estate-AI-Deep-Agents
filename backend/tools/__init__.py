@@ -13,6 +13,12 @@ from .financial import (
     calculate_property_tax,
     compare_properties
 )
+from .web_scraping import (
+    scrape_property_page,
+    extract_property_data,
+    search_zillow_listings,
+    search_redfin_listings,
+)
 
 __all__ = [
     # RealtyUS
@@ -28,4 +34,9 @@ __all__ = [
     "estimate_mortgage",
     "calculate_property_tax",
     "compare_properties",
+    # Web Scraping
+    "scrape_property_page",
+    "extract_property_data",
+    "search_zillow_listings",
+    "search_redfin_listings",
 ]

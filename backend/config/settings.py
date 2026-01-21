@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     
     # Web Scraping APIs
     scraperapi_key: str | None = None  # Alternative to Bright Data (https://www.scraperapi.com/)
+    hasdata_api_key: str | None = None  # HasData API for Zillow/Redfin scraping (https://api.hasdata.com/)
     
     # Redis
     redis_url: str = "redis://localhost:6379/0"

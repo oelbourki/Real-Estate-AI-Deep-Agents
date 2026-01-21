@@ -22,7 +22,12 @@ from backend.tools.financial import (
     calculate_property_tax,
     compare_properties
 )
-from backend.tools.web_scraping import scrape_property_page, extract_property_data
+from backend.tools.web_scraping import (
+    scrape_property_page,
+    extract_property_data,
+    search_zillow_listings,
+    search_redfin_listings,
+)
 from backend.tools.market_research import (
     search_market_trends,
     get_price_history,
@@ -79,6 +84,8 @@ def get_subagents() -> List[SubAgent]:
             "tools": [
                 scrape_property_page,
                 extract_property_data,
+                search_zillow_listings,
+                search_redfin_listings,
             ],
         },
         {

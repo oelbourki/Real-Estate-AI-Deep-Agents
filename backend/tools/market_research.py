@@ -201,6 +201,41 @@ def get_price_history(address: str, location: Optional[str] = None) -> dict:
     Uses web scraping approach since Zillow/Redfin APIs require partnerships.
     """
     try:
+        # Try HasData API for Zillow price history
+        if settings.hasdata_api_key and location:
+            try:
+                from backend.tools.web_scraping import _get_zillow_listings_hasdata
+                
+                # Search for listings in the location to get price data
+                hasdata_result = _get_zillow_listings_hasdata(location, "forSale")
+                
+                if "error" not in hasdata_result and hasdata_result.get("success"):
+                    data = hasdata_result.get("data", {})
+                    listings = data.get("listings", []) if isinstance(data, dict) else []
+                    if isinstance(data, list):
+                        listings = data
+                    
+                    # Extract price history from listings
+                    price_history = []
+                    for listing in listings:
+                        if listing.get("price") or listing.get("list_price"):
+                            price_history.append({
+                                "date": listing.get("list_date") or listing.get("date"),
+                                "price": listing.get("price") or listing.get("list_price"),
+                                "address": listing.get("address") or listing.get("street_address")
+                            })
+                    
+                    if price_history:
+                        return {
+                            "address": address,
+                            "location": location,
+                            "price_history": price_history,
+                            "data_source": "HasData API (Zillow)",
+                            "note": "Price history extracted from current listings. For historical price data, use property-specific scraping."
+                        }
+            except Exception as hasdata_error:
+                logger.warning(f"HasData API error: {hasdata_error}. Trying other methods.")
+        
         # Try Zillow API if partnership available
         if settings.zillow_api_key:
             try:
@@ -227,13 +262,12 @@ def get_price_history(address: str, location: Optional[str] = None) -> dict:
             except Exception as zillow_error:
                 logger.warning(f"Zillow API error: {zillow_error}. Falling back to web scraping.")
         
-        # Fallback: Use web scraping (will be enhanced in web_scraping.py)
-        # For now, return placeholder with instructions
+        # Fallback: Use web scraping
         result = {
             "address": address,
             "location": location,
             "price_history": {
-                "note": "Price history requires web scraping implementation",
+                "note": "Price history requires property-specific scraping",
                 "suggested_approach": "Use scrape_property_page tool with Zillow/Redfin URLs",
                 "example": f"scrape_property_page('https://www.zillow.com/homes/{address.replace(' ', '-')}', source='zillow')"
             },
@@ -241,9 +275,10 @@ def get_price_history(address: str, location: Optional[str] = None) -> dict:
                 "note": "Use market data APIs for neighborhood price trends"
             },
             "recommendations": [
-                "Use scrape_property_page tool to get property data",
-                "Configure SCRAPERAPI_KEY for reliable scraping",
-                "Or use Zillow API if partnership is available"
+                "Use search_zillow_listings tool with location to get current listings",
+                "Use scrape_property_page tool for specific property price history",
+                "Configure HASDATA_API_KEY for reliable Zillow/Redfin data",
+                "Or configure SCRAPERAPI_KEY for general web scraping"
             ],
             "data_source": "placeholder"
         }

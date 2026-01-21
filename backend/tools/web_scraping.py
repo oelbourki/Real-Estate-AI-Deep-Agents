@@ -14,6 +14,91 @@ from backend.utils.cache import cached
 logger = logging.getLogger(__name__)
 
 
+def _get_zillow_listings_hasdata(keyword: str, listing_type: str = "forSale") -> dict:
+    """
+    Get Zillow listings using HasData API.
+    
+    Args:
+        keyword: Location keyword (e.g., "New York, NY")
+        listing_type: "forSale" or "forRent"
+    
+    Returns:
+        dict with listings data
+    """
+    if not settings.hasdata_api_key:
+        return {"error": "HASDATA_API_KEY not configured"}
+    
+    try:
+        import http.client
+        import urllib.parse
+        
+        conn = http.client.HTTPSConnection("api.hasdata.com")
+        
+        headers = {
+            'x-api-key': settings.hasdata_api_key,
+            'Content-Type': "application/json"
+        }
+        
+        # URL encode the keyword
+        encoded_keyword = urllib.parse.quote(keyword)
+        path = f"/scrape/zillow/listing?keyword={encoded_keyword}&type={listing_type}"
+        
+        conn.request("GET", path, headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+        
+        if res.status == 200:
+            import json
+            result = json.loads(data.decode("utf-8"))
+            return {"success": True, "data": result, "source": "HasData API (Zillow)"}
+        else:
+            return {"error": f"HasData API error: {res.status} - {data.decode('utf-8')}"}
+    except Exception as e:
+        logger.error(f"HasData Zillow API error: {e}")
+        return {"error": f"HasData API request failed: {str(e)}"}
+
+
+def _get_redfin_listings_hasdata(zipcode: str, listing_type: str = "forSale") -> dict:
+    """
+    Get Redfin listings using HasData API.
+    
+    Args:
+        zipcode: ZIP code (e.g., "33321")
+        listing_type: "forSale" or "forRent"
+    
+    Returns:
+        dict with listings data
+    """
+    if not settings.hasdata_api_key:
+        return {"error": "HASDATA_API_KEY not configured"}
+    
+    try:
+        import http.client
+        
+        conn = http.client.HTTPSConnection("api.hasdata.com")
+        
+        headers = {
+            'x-api-key': settings.hasdata_api_key,
+            'Content-Type': "application/json"
+        }
+        
+        path = f"/scrape/redfin/listing?keyword={zipcode}&type={listing_type}"
+        
+        conn.request("GET", path, headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+        
+        if res.status == 200:
+            import json
+            result = json.loads(data.decode("utf-8"))
+            return {"success": True, "data": result, "source": "HasData API (Redfin)"}
+        else:
+            return {"error": f"HasData API error: {res.status} - {data.decode('utf-8')}"}
+    except Exception as e:
+        logger.error(f"HasData Redfin API error: {e}")
+        return {"error": f"HasData API request failed: {str(e)}"}
+
+
 def _scrape_with_scraperapi(url: str) -> requests.Response:
     """Scrape URL using ScraperAPI if available."""
     if settings.scraperapi_key:
@@ -354,4 +439,143 @@ def extract_property_data(html_content: str, source: str, url: Optional[str] = N
             "source": source,
             "url": url,
             "extraction_method": "error"
+        }
+
+
+class SearchZillowListingsInput(BaseModel):
+    """Input schema for searching Zillow listings via HasData API."""
+    keyword: str = Field(..., description="Location keyword (e.g., 'New York, NY', 'San Francisco, CA')")
+    listing_type: str = Field("forSale", description="Listing type: 'forSale' or 'forRent'")
+
+
+@tool("search_zillow_listings", args_schema=SearchZillowListingsInput)
+@cached(ttl=3600, prefix="zillow_listings")  # Cache for 1 hour
+@retry_on_http_error(max_attempts=3)
+def search_zillow_listings(keyword: str, listing_type: str = "forSale") -> dict:
+    """
+    Search Zillow listings using HasData API.
+    Returns property listings for a given location.
+    
+    Uses HasData API for reliable Zillow data extraction.
+    """
+    try:
+        result = _get_zillow_listings_hasdata(keyword, listing_type)
+        
+        if "error" in result:
+            return result
+        
+        # Extract and structure the listings data
+        data = result.get("data", {})
+        listings = data.get("listings", []) if isinstance(data, dict) else []
+        
+        # If data is a list, use it directly
+        if isinstance(data, list):
+            listings = data
+        
+        structured_listings = []
+        for listing in listings[:50]:  # Limit to 50 listings
+            structured_listings.append({
+                "address": listing.get("address") or listing.get("street_address"),
+                "price": listing.get("price") or listing.get("list_price"),
+                "bedrooms": listing.get("bedrooms") or listing.get("beds"),
+                "bathrooms": listing.get("bathrooms") or listing.get("baths"),
+                "square_feet": listing.get("square_feet") or listing.get("sqft"),
+                "lot_size": listing.get("lot_size"),
+                "year_built": listing.get("year_built"),
+                "property_type": listing.get("property_type"),
+                "listing_url": listing.get("url") or listing.get("listing_url"),
+                "image_url": listing.get("image") or listing.get("photo_url"),
+                "description": listing.get("description"),
+                "coordinates": listing.get("coordinates") or {
+                    "lat": listing.get("latitude"),
+                    "lon": listing.get("longitude")
+                } if listing.get("latitude") else None,
+                "raw_data": listing  # Include raw data for reference
+            })
+        
+        return {
+            "keyword": keyword,
+            "listing_type": listing_type,
+            "listings": structured_listings,
+            "total_count": len(structured_listings),
+            "data_source": "HasData API (Zillow)",
+            "success": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Zillow listings search error: {e}")
+        return {
+            "error": f"Failed to search Zillow listings: {str(e)}",
+            "keyword": keyword,
+            "suggestion": "Configure HASDATA_API_KEY for Zillow listings. Get key at https://api.hasdata.com/"
+        }
+
+
+class SearchRedfinListingsInput(BaseModel):
+    """Input schema for searching Redfin listings via HasData API."""
+    zipcode: str = Field(..., description="ZIP code (e.g., '33321', '10001')")
+    listing_type: str = Field("forSale", description="Listing type: 'forSale' or 'forRent'")
+
+
+@tool("search_redfin_listings", args_schema=SearchRedfinListingsInput)
+@cached(ttl=3600, prefix="redfin_listings")  # Cache for 1 hour
+@retry_on_http_error(max_attempts=3)
+def search_redfin_listings(zipcode: str, listing_type: str = "forSale") -> dict:
+    """
+    Search Redfin listings using HasData API.
+    Returns property listings for a given ZIP code.
+    
+    Uses HasData API for reliable Redfin data extraction.
+    Note: Redfin API uses ZIP codes instead of city names.
+    """
+    try:
+        result = _get_redfin_listings_hasdata(zipcode, listing_type)
+        
+        if "error" in result:
+            return result
+        
+        # Extract and structure the listings data
+        data = result.get("data", {})
+        listings = data.get("listings", []) if isinstance(data, dict) else []
+        
+        # If data is a list, use it directly
+        if isinstance(data, list):
+            listings = data
+        
+        structured_listings = []
+        for listing in listings[:50]:  # Limit to 50 listings
+            structured_listings.append({
+                "address": listing.get("address") or listing.get("street_address"),
+                "price": listing.get("price") or listing.get("list_price"),
+                "bedrooms": listing.get("bedrooms") or listing.get("beds"),
+                "bathrooms": listing.get("bathrooms") or listing.get("baths"),
+                "square_feet": listing.get("square_feet") or listing.get("sqft"),
+                "lot_size": listing.get("lot_size"),
+                "year_built": listing.get("year_built"),
+                "property_type": listing.get("property_type"),
+                "listing_url": listing.get("url") or listing.get("listing_url"),
+                "image_url": listing.get("image") or listing.get("photo_url"),
+                "description": listing.get("description"),
+                "coordinates": listing.get("coordinates") or {
+                    "lat": listing.get("latitude"),
+                    "lon": listing.get("longitude")
+                } if listing.get("latitude") else None,
+                "raw_data": listing  # Include raw data for reference
+            })
+        
+        return {
+            "zipcode": zipcode,
+            "listing_type": listing_type,
+            "listings": structured_listings,
+            "total_count": len(structured_listings),
+            "data_source": "HasData API (Redfin)",
+            "success": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Redfin listings search error: {e}")
+        return {
+            "error": f"Failed to search Redfin listings: {str(e)}",
+            "zipcode": zipcode,
+            "suggestion": "Configure HASDATA_API_KEY for Redfin listings. Get key at https://api.hasdata.com/"
         }
