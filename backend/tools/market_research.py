@@ -237,30 +237,26 @@ def get_price_history(address: str, location: Optional[str] = None) -> dict:
                 logger.warning(f"HasData API error: {hasdata_error}. Trying other methods.")
         
         # Try Zillow API if partnership available
-        if settings.zillow_api_key:
+        if settings.zillow_api_key or settings.hasdata_api_key:
             try:
-                # Zillow API endpoint (example - actual endpoint may vary)
-                url = "https://api.zillow.com/v1/GetPriceHistory"
-                params = {
-                    "zws-id": settings.zillow_api_key,
+                from backend.tools.zillow_api import zillow_get_price_history
+                
+                citystatezip = location or address
+                zillow_result = zillow_get_price_history.invoke({
                     "address": address,
-                    "citystatezip": location or ""
-                }
+                    "citystatezip": citystatezip,
+                    "location": location
+                })
                 
-                response = requests.get(url, params=params, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-                
-                price_history = data.get("price_history", [])
-                
-                return {
-                    "address": address,
-                    "location": location,
-                    "price_history": price_history,
-                    "data_source": "Zillow API"
-                }
+                if "error" not in zillow_result and zillow_result.get("price_history"):
+                    return {
+                        "address": address,
+                        "location": location,
+                        "price_history": zillow_result.get("price_history", []),
+                        "data_source": zillow_result.get("data_source", "Zillow API")
+                    }
             except Exception as zillow_error:
-                logger.warning(f"Zillow API error: {zillow_error}. Falling back to web scraping.")
+                logger.warning(f"Zillow API error: {zillow_error}. Trying other methods.")
         
         # Fallback: Use web scraping
         result = {

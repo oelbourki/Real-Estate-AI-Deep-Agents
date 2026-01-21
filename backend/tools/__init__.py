@@ -19,6 +19,8 @@ from .web_scraping import (
     search_zillow_listings,
     search_redfin_listings,
 )
+from .zillow_api import zillow_get_price_history
+from .redfin_api import redfin_get_price_history
 
 __all__ = [
     # RealtyUS
@@ -39,4 +41,7 @@ __all__ = [
     "extract_property_data",
     "search_zillow_listings",
     "search_redfin_listings",
+    # Zillow/Redfin APIs
+    "zillow_get_price_history",
+    "redfin_get_price_history",
 ]

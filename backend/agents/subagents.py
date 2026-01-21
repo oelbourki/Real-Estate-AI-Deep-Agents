@@ -28,6 +28,8 @@ from backend.tools.web_scraping import (
     search_zillow_listings,
     search_redfin_listings,
 )
+from backend.tools.zillow_api import zillow_get_price_history
+from backend.tools.redfin_api import redfin_get_price_history
 from backend.tools.market_research import (
     search_market_trends,
     get_price_history,
@@ -86,6 +88,8 @@ def get_subagents() -> List[SubAgent]:
                 extract_property_data,
                 search_zillow_listings,
                 search_redfin_listings,
+                zillow_get_price_history,
+                redfin_get_price_history,
             ],
         },
         {
@@ -96,6 +100,8 @@ def get_subagents() -> List[SubAgent]:
                 search_market_trends,
                 get_price_history,
                 compare_markets,
+                zillow_get_price_history,
+                redfin_get_price_history,
             ],
         },
         {
