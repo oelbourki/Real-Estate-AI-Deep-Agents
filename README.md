@@ -12,11 +12,27 @@
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [API Reference](#-api-reference)
 
-</div>
+<!-- </div>
 
 <div align="center">
   <img src="assets/msedge_PRrDGDBokM.png" alt="Real Estate AI Deep Agents" width="800"/>
   <p><em>Real Estate AI Deep Agents Chat Interface</em></p>
+  <img src="assets/msedge_UA7YCuPTU1.png" alt="Real Estate AI Deep Agents: Financial subagent" width="800"/>
+  <p><em>Financial analysis using subagent</em></p>
+</div> -->
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="assets/msedge_PRrDGDBokM.png" alt="Real Estate AI Deep Agents" width="400"/>
+        <p><em>Real Estate AI Deep Agents Chat Interface</em></p>
+      </td>
+      <td align="center">
+        <img src="assets/msedge_UA7YCuPTU1.png" alt="Financial subagent" width="400"/>
+        <p><em>Financial analysis subagent resolving a complex query</em></p>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ---
