@@ -85,6 +85,31 @@ The **Real Estate AI Deep Agents** is a sophisticated, production-ready AI syste
 
 ---
 
+## 🗺️ Production Roadmap
+
+We're continuously improving the platform to achieve enterprise-grade production readiness. Current focus areas:
+
+| Area | Status | Priority |
+|------|--------|----------|
+| **Security Hardening** | 🔄 In Progress | Critical |
+| **CI/CD Pipeline** | 📋 Planned | Critical |
+| **Test Coverage** | 📋 Planned | High |
+| **Monitoring & Observability** | 🔄 In Progress | High |
+| **Performance Optimization** | 📋 Planned | Medium |
+| **Deployment Automation** | 📋 Planned | Medium |
+
+**Key Improvements Coming:**
+- 🔐 Secrets management & authentication
+- 🚀 Automated CI/CD with GitHub Actions
+- ✅ 80%+ test coverage with comprehensive test suite
+- 📊 Enhanced monitoring with centralized logging & APM
+- ⚡ Async/await optimizations & connection pooling
+- 🔄 Blue-green deployment & automated rollbacks
+
+For detailed analysis and implementation plan, see [Production Readiness Report](docs/PRODUCTION_READINESS_REPORT.md).
+
+---
+
 ## 🏗️ Architecture
 
 ### LangGraph Architecture
