@@ -92,15 +92,54 @@ We're continuously improving the platform to achieve enterprise-grade production
 | **Performance Optimization** | 📋 Planned | Medium |
 | **Deployment Automation** | 📋 Planned | Medium |
 
-**Key Improvements Coming:**
-- 🔐 Secrets management & authentication
-- 🚀 Automated CI/CD with GitHub Actions
-- ✅ 80%+ test coverage with comprehensive test suite
-- 📊 Enhanced monitoring with centralized logging & APM
-- ⚡ Async/await optimizations & connection pooling
-- 🔄 Blue-green deployment & automated rollbacks
+### Security & Infrastructure
 
-For detailed analysis and implementation plan, see [Production Readiness Report](docs/PRODUCTION_READINESS_REPORT.md).
+**Critical Priority:**
+- 🔐 **Secrets Management**: Implement HashiCorp Vault or AWS Secrets Manager for secure credential storage
+- 🔑 **Authentication/Authorization**: Add JWT tokens or API keys for secure API access
+- 🛡️ **Security Headers**: Implement CSP, HSTS, X-Frame-Options for enhanced security
+- 🔍 **Dependency Scanning**: Automated vulnerability scanning for dependencies
+
+### CI/CD & Testing
+
+**Critical Priority:**
+- 🚀 **CI/CD Pipeline**: Set up GitHub Actions for automated testing and deployment
+- ✅ **Test Coverage**: Increase test coverage to 80%+ (currently ~30%)
+- 🧪 **Integration Tests**: Add comprehensive integration and E2E tests
+- 🔧 **Pre-commit Hooks**: Add code quality checks and automated formatting
+
+### Performance & Scalability
+
+**High Priority:**
+- ⚡ **Async Optimization**: Fix all blocking operations with async/await patterns
+- 🔄 **Connection Pooling**: Implement HTTP connection pooling for better performance
+- 📊 **Request Queuing**: Add request queuing system (Celery or similar) for handling high load
+- ⚖️ **Load Balancing**: Implement load balancing and auto-scaling capabilities
+
+### Monitoring & Observability
+
+**High Priority:**
+- 📝 **Centralized Logging**: Set up log aggregation with ELK Stack (Elasticsearch, Logstash, Kibana)
+- 📈 **APM Integration**: Integrate application performance monitoring (New Relic, Datadog, or Sentry)
+- 📊 **Monitoring Dashboards**: Create comprehensive dashboards with Grafana
+- 🚨 **Alerting System**: Implement alerting with PagerDuty or Opsgenie for critical issues
+
+### Deployment & DevOps
+
+**Medium Priority:**
+- 🐳 **Docker Automation**: Automated Docker image building and registry management
+- 🌍 **Staging Environment**: Set up dedicated staging environment for testing
+- 🔄 **Blue-Green Deployment**: Implement blue-green deployment strategy for zero-downtime updates
+- 📦 **Infrastructure as Code**: Use Terraform or CloudFormation for infrastructure management
+- 💾 **Automated Backups**: Implement automated backup strategy for data protection
+
+### Database & Storage
+
+**Medium Priority:**
+- 🗄️ **PostgreSQL Integration**: Add PostgreSQL for structured data storage
+- 📊 **Connection Pooling**: Implement database connection pooling for optimal performance
+- 🔄 **Data Migrations**: Set up data migration system using Alembic for schema management
+
 
 ---
 
@@ -320,7 +359,7 @@ Get your RapidAPI key from [RapidAPI Hub](https://rapidapi.com/hub) and subscrib
 ### Optional Configuration
 
 - **Redis**: `REDIS_URL=redis://localhost:6379/0` (for caching)
-- **LangSmith**: For monitoring and debugging - See [LangSmith Setup Guide](docs/LANGSMITH_SETUP.md)
+- **LangSmith**: For monitoring and debugging
 - **Token Limits**: `ENABLE_TOKEN_LIMITS=true`, `MAX_TOKENS_PER_REQUEST=100000`
 
 See `backend/.env.example` for all available options.
@@ -335,7 +374,6 @@ See `backend/.env.example` for all available options.
    LANGCHAIN_API_KEY=your-api-key-here
    LANGCHAIN_PROJECT=real-estate-ai-agent
    ```
-4. See [docs/LANGSMITH_SETUP.md](docs/LANGSMITH_SETUP.md) for detailed instructions
 
 ---
 
@@ -489,8 +527,6 @@ When using `langgraph dev`, these endpoints are automatically available:
 - `POST /assistants/{assistant_id}/threads/{thread_id}/runs` - Create run
 - `POST /assistants/{assistant_id}/threads/{thread_id}/runs/stream` - Stream run
 
-See [docs/](./docs/) for detailed API documentation.
-
 ---
 
 ## 🛠️ Development
@@ -616,7 +652,6 @@ Contributions are welcome! Please follow these steps:
 
 **Solution**: This occurs when using `langgraph dev`. Options:
 - Use `langgraph dev --allow-blocking` for development
-- Or fix the blocking call in `backend/backends/storage.py` (see [BACKEND_AND_AGENTS_REPORT.md](./BACKEND_AND_AGENTS_REPORT.md))
 
 #### 4. "Request too large" error (Groq)
 
@@ -631,8 +666,6 @@ Contributions are welcome! Please follow these steps:
 - Make sure `langgraph dev` is running on `http://localhost:2024`
 - Check `agent-chat-ui/.env.local` has correct `NEXT_PUBLIC_API_URL`
 - Verify CORS settings in `backend/config/settings.py`
-
-For more troubleshooting, see [docs/](./docs/).
 
 ---
 
@@ -659,8 +692,6 @@ The Real Estate AI Agent implements several security measures to protect user da
 ### Reporting Security Issues
 
 If you discover a security vulnerability, please **do not** open a public issue. Instead, email [otmane.elbourki@gmail.com](mailto:otmane.elbourki@gmail.com) with details.
-
-For detailed security analysis, see [Production Readiness Report](docs/PRODUCTION_READINESS_REPORT.md#2-security-analysis).
 
 ---
 
