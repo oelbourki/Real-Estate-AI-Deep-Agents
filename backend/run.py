@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Run script for the Real Estate AI Deep Agents backend.
 
-Run from project root so backend.* imports resolve:
-  python backend/run.py
-  or: PYTHONPATH=. python backend/run.py
+Run from project root with the backend venv active so the reload worker sees the same env:
+  cd backend && . venv/bin/activate && PYTHONPATH=.. python run.py
+  or from repo root: backend/venv/bin/python backend/run.py
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -16,6 +17,11 @@ for _p in (_root, _backend):
     _s = str(_p)
     if _s not in sys.path:
         sys.path.insert(0, _s)
+
+# So the uvicorn reload worker (spawned subprocess) inherits the same path
+_existing = os.environ.get("PYTHONPATH", "")
+_extra = os.pathsep.join([str(_root), str(_backend)])
+os.environ["PYTHONPATH"] = _extra + (os.pathsep + _existing if _existing else "")
 
 # Imports must follow sys.path setup so config/settings resolve (root-based runs)
 import uvicorn  # noqa: E402
