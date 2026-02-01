@@ -79,29 +79,6 @@ The **Real Estate AI Deep Agents** is a sophisticated, enterprise-grade AI syste
 
 ---
 
-## 🗺️ Production Roadmap
-
-We're improving the platform toward enterprise-grade production readiness.
-
-| Area | Status | Priority |
-|------|--------|----------|
-| **Security Hardening** | 🔄 In Progress | Critical |
-| **CI/CD Pipeline** | ✅ Done | Critical |
-| **Test Coverage** | 📋 Planned | High |
-| **Monitoring & Observability** | 🔄 In Progress | High |
-| **Performance Optimization** | 📋 Planned | Medium |
-| **Deployment Automation** | 📋 Planned | Medium |
-
-**Done:** CI/CD (GitHub Actions: Ruff lint + format, Pytest); pre-commit (Ruff for `backend/`).
-
-**Critical (planned):** Secrets management (Vault/AWS Secrets Manager), auth (JWT or API keys), security headers (CSP, HSTS), dependency scanning.
-
-**High (planned):** Test coverage to 80%+, more integration/E2E tests; centralized logging (e.g. ELK), APM (New Relic/Datadog/Sentry), dashboards (Grafana), alerting (PagerDuty/Opsgenie).
-
-**Medium (planned):** Further async/connection pooling; request queuing & load balancing; Docker/registry automation, staging, blue-green, IaC (Terraform/CloudFormation), backups; PostgreSQL, connection pooling, migrations (Alembic).
-
----
-
 ## 🏗️ Architecture
 
 ### LangGraph Architecture
@@ -741,6 +718,29 @@ We're actively working on addressing these limitations. Key improvements planned
 - 🗄️ Add PostgreSQL for structured data
 - 📊 Database connection pooling
 - 🔄 Data migration system (Alembic)
+
+---
+
+## 🗺️ Production Roadmap
+
+We're improving the platform toward enterprise-grade production readiness.
+
+| Area | Status | Priority |
+|------|--------|----------|
+| **Security Hardening** | 🔄 In Progress | Critical |
+| **CI/CD Pipeline** | ✅ Done | Critical |
+| **Test Coverage** | 📋 Planned | High |
+| **Monitoring & Observability** | 🔄 In Progress | High |
+| **Performance Optimization** | 📋 Planned | Medium |
+| **Deployment Automation** | 📋 Planned | Medium |
+
+**Done:** CI/CD (GitHub Actions: Ruff lint + format, Pytest); pre-commit (Ruff for `backend/`).
+
+**Critical (planned):** Secrets management (Vault/AWS Secrets Manager), auth (JWT or API keys), security headers (CSP, HSTS), dependency scanning.
+
+**High (planned):** Test coverage to 80%+, more integration/E2E tests; centralized logging (e.g. ELK), APM (New Relic/Datadog/Sentry), dashboards (Grafana), alerting (PagerDuty/Opsgenie).
+
+**Medium (planned):** Further async/connection pooling; request queuing & load balancing; Docker/registry automation, staging, blue-green, IaC (Terraform/CloudFormation), backups; PostgreSQL, connection pooling, migrations (Alembic).
 
 ---
 

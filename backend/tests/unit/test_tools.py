@@ -10,9 +10,11 @@ from unittest.mock import patch, Mock
 class TestRealtyUSTools:
     """Tests for RealtyUS tools."""
 
+    @patch("tools.realty_us.settings")
     @patch("tools.realty_us.requests.get")
-    def test_realty_us_search_buy_success(self, mock_get):
+    def test_realty_us_search_buy_success(self, mock_get, mock_settings):
         """Test successful property search."""
+        mock_settings.rapidapi_key = "test-key"
         mock_response = Mock()
         mock_response.json.return_value = {
             "data": {
