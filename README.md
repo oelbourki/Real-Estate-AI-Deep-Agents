@@ -5,7 +5,7 @@
 **An enterprise-level real estate AI solution powered by DeepAgents and LangGraph**
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-green.svg)](https://fastapi.tiangolo.com/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-1.0-orange.svg)](https://github.com/langchain-ai/langgraph)
 [![DeepAgents](https://img.shields.io/badge/DeepAgents-0.1-purple.svg)](https://github.com/deepagents/deepagents)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -18,11 +18,11 @@
   <table>
     <tr>
       <td align="center">
-        <img src="assets/msedge_PRrDGDBokM.png" alt="Real Estate AI Deep Agents" width="400"/>
+        <img src="assets/msedge_sx2PwbcAUg.png" alt="Real Estate AI Deep Agents" width="400"/>
         <p><em>Real Estate AI Deep Agents Chat Interface</em></p>
       </td>
       <td align="center">
-        <img src="assets/msedge_UA7YCuPTU1.png" alt="Financial subagent" width="400"/>
+        <img src="assets/msedge_zsXJOOPj6k.png" alt="Financial subagent" width="400"/>
         <p><em>Financial analysis subagent resolving a complex query</em></p>
       </td>
     </tr>
@@ -81,65 +81,24 @@ The **Real Estate AI Deep Agents** is a sophisticated, enterprise-grade AI syste
 
 ## 🗺️ Production Roadmap
 
-We're continuously improving the platform to achieve enterprise-grade production readiness. Current focus areas:
+We're improving the platform toward enterprise-grade production readiness.
 
 | Area | Status | Priority |
 |------|--------|----------|
 | **Security Hardening** | 🔄 In Progress | Critical |
-| **CI/CD Pipeline** | 📋 Planned | Critical |
+| **CI/CD Pipeline** | ✅ Done | Critical |
 | **Test Coverage** | 📋 Planned | High |
 | **Monitoring & Observability** | 🔄 In Progress | High |
 | **Performance Optimization** | 📋 Planned | Medium |
 | **Deployment Automation** | 📋 Planned | Medium |
 
-### Security & Infrastructure
+**Done:** CI/CD (GitHub Actions: Ruff lint + format, Pytest); pre-commit (Ruff for `backend/`).
 
-**Critical Priority:**
-- 🔐 **Secrets Management**: Implement HashiCorp Vault or AWS Secrets Manager for secure credential storage
-- 🔑 **Authentication/Authorization**: Add JWT tokens or API keys for secure API access
-- 🛡️ **Security Headers**: Implement CSP, HSTS, X-Frame-Options for enhanced security
-- 🔍 **Dependency Scanning**: Automated vulnerability scanning for dependencies
+**Critical (planned):** Secrets management (Vault/AWS Secrets Manager), auth (JWT or API keys), security headers (CSP, HSTS), dependency scanning.
 
-### CI/CD & Testing
+**High (planned):** Test coverage to 80%+, more integration/E2E tests; centralized logging (e.g. ELK), APM (New Relic/Datadog/Sentry), dashboards (Grafana), alerting (PagerDuty/Opsgenie).
 
-**Critical Priority:**
-- 🚀 **CI/CD Pipeline**: Set up GitHub Actions for automated testing and deployment
-- ✅ **Test Coverage**: Increase test coverage to 80%+ (currently ~30%)
-- 🧪 **Integration Tests**: Add comprehensive integration and E2E tests
-- 🔧 **Pre-commit Hooks**: Add code quality checks and automated formatting
-
-### Performance & Scalability
-
-**High Priority:**
-- ⚡ **Async Optimization**: Fix all blocking operations with async/await patterns
-- 🔄 **Connection Pooling**: Implement HTTP connection pooling for better performance
-- 📊 **Request Queuing**: Add request queuing system (Celery or similar) for handling high load
-- ⚖️ **Load Balancing**: Implement load balancing and auto-scaling capabilities
-
-### Monitoring & Observability
-
-**High Priority:**
-- 📝 **Centralized Logging**: Set up log aggregation with ELK Stack (Elasticsearch, Logstash, Kibana)
-- 📈 **APM Integration**: Integrate application performance monitoring (New Relic, Datadog, or Sentry)
-- 📊 **Monitoring Dashboards**: Create comprehensive dashboards with Grafana
-- 🚨 **Alerting System**: Implement alerting with PagerDuty or Opsgenie for critical issues
-
-### Deployment & DevOps
-
-**Medium Priority:**
-- 🐳 **Docker Automation**: Automated Docker image building and registry management
-- 🌍 **Staging Environment**: Set up dedicated staging environment for testing
-- 🔄 **Blue-Green Deployment**: Implement blue-green deployment strategy for zero-downtime updates
-- 📦 **Infrastructure as Code**: Use Terraform or CloudFormation for infrastructure management
-- 💾 **Automated Backups**: Implement automated backup strategy for data protection
-
-### Database & Storage
-
-**Medium Priority:**
-- 🗄️ **PostgreSQL Integration**: Add PostgreSQL for structured data storage
-- 📊 **Connection Pooling**: Implement database connection pooling for optimal performance
-- 🔄 **Data Migrations**: Set up data migration system using Alembic for schema management
-
+**Medium (planned):** Further async/connection pooling; request queuing & load balancing; Docker/registry automation, staging, blue-green, IaC (Terraform/CloudFormation), backups; PostgreSQL, connection pooling, migrations (Alembic).
 
 ---
 
@@ -251,7 +210,7 @@ git clone --recurse-submodules https://github.com/oelbourki/real-estate-ai-agent
 cd real-estate-ai-agent
 ```
 
-2. **Set up backend**:
+2. **Set up backend** (from project root):
 
 ```bash
 cd backend
@@ -266,13 +225,15 @@ pip install -U "langgraph-cli[inmem]"
 3. **Configure environment variables**:
 
 ```bash
+# From backend/
 cp .env.example .env
 # Edit .env with your API keys (see Configuration section)
 ```
 
-4. **Initialize memory files**:
+4. **Initialize memory files** (from backend with venv active):
 
 ```bash
+# From backend/
 python -c "from backends.memory import initialize_memory_files; initialize_memory_files()"
 ```
 
@@ -294,11 +255,19 @@ langgraph dev
 
 Server starts on `http://localhost:2024` with LangGraph Platform API endpoints.
 
-#### Option 2: FastAPI Backend
+#### Option 2: FastAPI Backend (run from project root)
+
+The backend uses root-based imports; run from the **repository root**:
 
 ```bash
-cd backend
-python run.py
+# From project root (real-estate-ai-agent/)
+python backend/run.py
+```
+
+Or with uvicorn directly:
+
+```bash
+PYTHONPATH=. uvicorn backend.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Server starts on `http://localhost:8000` with FastAPI endpoints.
@@ -311,6 +280,17 @@ pnpm dev
 ```
 
 Frontend starts on `http://localhost:3000`.
+
+#### Option 4: Docker (root-based build)
+
+The image is built from the **repository root** so `backend` is a package and `PYTHONPATH` is set in the Dockerfile.
+
+```bash
+# From project root
+docker compose -f docker/docker-compose.yml up --build
+```
+
+Backend runs on `http://localhost:8000`. For dev with reload, use `docker/docker-compose.dev.yml` (mounts repo at `/app` and runs `uvicorn backend.api.main:app --reload`).
 
 ---
 
@@ -370,9 +350,10 @@ See `backend/.env.example` for all available options.
 2. Get your API key from Settings → API Keys
 3. Add to `backend/.env`:
    ```bash
-   LANGCHAIN_TRACING_V2=true
-   LANGCHAIN_API_KEY=your-api-key-here
-   LANGCHAIN_PROJECT=real-estate-ai-agent
+   LANGSMITH_TRACING=true
+   LANGSMITH_API_KEY=your-api-key-here
+   LANGSMITH_PROJECT=real-estate-ai-deep-agents
+   LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com
    ```
 
 ---
@@ -448,9 +429,11 @@ curl -X POST http://localhost:8000/api/v1/chat \
 
 **Response**: Complete property report with market trends, location analysis, financial projections, and recommendations.
 
-### Using the Frontend (agent-chat-ui)
+### Using the Frontend (agent-chat-ui or deep-agents-ui)
 
-1. Open `http://localhost:3000`
+**agent-chat-ui** (or **deep-agents-ui**, if using that submodule):
+
+1. Open `http://localhost:3000` (or the port your frontend uses)
 2. Enter:
    - **Deployment URL**: `http://localhost:2024`
    - **Assistant ID**: `real-estate-agent`
@@ -503,6 +486,7 @@ GET /health
 {
   "status": "healthy",
   "version": "1.0.0",
+  "environment": "development",
   "redis": "connected",
   "timestamp": 1234567890
 }
@@ -536,25 +520,24 @@ When using `langgraph dev`, these endpoints are automatically available:
 ```
 real-estate-ai-agent/
 ├── backend/                  # Backend Python code
-│   ├── agents/              # Agent implementations
-│   │   ├── main_agent.py    # Main orchestrator
-│   │   └── subagents.py     # Subagent definitions
-│   ├── api/                 # FastAPI endpoints
-│   │   ├── main.py          # FastAPI app
-│   │   └── schemas.py       # Request/response models
-│   ├── tools/               # Tool implementations
-│   │   ├── realty_us.py     # Property search
-│   │   ├── location.py      # Location analysis
-│   │   ├── financial.py     # Financial calculations
-│   │   ├── market_research.py
-│   │   └── web_scraping.py
-│   ├── backends/            # Storage backends
-│   ├── config/              # Configuration
-│   ├── utils/               # Utilities
-│   └── tests/               # Test suite
+│   ├── agents/              # Agent implementations (main_agent, subagents)
+│   ├── api/                 # FastAPI endpoints (main, middleware, schemas)
+│   ├── backends/            # Storage backends (storage, memory)
+│   ├── config/              # Configuration (settings, prompts, hitl_config)
+│   ├── tools/               # Tool implementations (realty_us, location, financial, market_research, web_scraping, etc.)
+│   ├── utils/               # Utilities (cache, logging, monitoring, retry, etc.)
+│   ├── scripts/             # Scripts (mermaid_to_png, visualize_architecture, backup, load_test)
+│   ├── security/            # Security utilities
+│   ├── examples/            # Usage examples
+│   └── tests/               # Test suite (unit/, integration/, e2e/)
+├── docker/                  # Docker (Dockerfile.backend, docker-compose.yml, docker-compose.dev.yml)
+├── docs/                    # Architecture diagrams (Mermaid .mmd) and reports
 ├── agent-chat-ui/           # Frontend (Git submodule)
-├── docs/                     # Documentation
+├── deep-agents-ui/          # Alternative frontend (Git submodule)
+├── assets/                  # Screenshots and generated architecture PNGs
+├── memories/                # Root-level memory files (optional)
 ├── langgraph.json           # LangGraph configuration
+├── LICENSE                  # MIT License
 └── README.md                # This file
 ```
 
@@ -562,14 +545,15 @@ real-estate-ai-agent/
 
 ```bash
 cd backend
-pytest
+python -m pytest tests/ -v --tb=short
 ```
 
-### Code Quality
+### Code Quality (from backend/)
 
 ```bash
+cd backend
 # Format code
-black .
+ruff format .
 
 # Lint code
 ruff check .
@@ -596,6 +580,11 @@ mypy .
 
 - FastAPI docs: `http://localhost:8000/docs` (when running FastAPI backend)
 - LangGraph Platform API: See [LangGraph documentation](https://langchain-ai.github.io/langgraph/)
+
+### Other Documentation
+
+- **Architecture**: `docs/` contains Mermaid sources (e.g. `complete_architecture.mmd`); generated PNGs are in `assets/`.
+- **Reports**: `PROJECT_HEALTH_REPORT.md` (project health). Additional reports (e.g. non-blocking changes, user interaction test scenarios) may exist in `docs/` or `docs-md/`.
 
 ---
 
@@ -625,7 +614,7 @@ Contributions are welcome! Please follow these steps:
 
 ### Development Guidelines
 
-- **Code Style**: Follow PEP 8, use `black` for formatting
+- **Code Style**: Follow PEP 8, use `ruff format` for formatting
 - **Testing**: Write unit tests for new features, aim for >80% coverage
 - **Documentation**: Update README and docstrings as needed
 - **Type Hints**: Use type hints for all function signatures
@@ -644,14 +633,15 @@ Contributions are welcome! Please follow these steps:
 - Or install and run Ollama locally
 - Or set another provider's API key
 
-#### 2. "ModuleNotFoundError: No module named 'config'"
+#### 2. "ModuleNotFoundError: No module named 'backend'" or "No module named 'config'"
 
-**Solution**: Make sure you're running from the project root or have the backend directory in your Python path. The code uses absolute imports (`from backend.config.settings`).
+**Solution**: The backend uses root-based imports. Always run from the **project root**: `python backend/run.py` or `PYTHONPATH=. uvicorn backend.api.main:app`. Do not run `python run.py` from inside `backend/`.
 
 #### 3. "BlockingError: Blocking call to os.getcwd"
 
-**Solution**: This occurs when using `langgraph dev`. Options:
-- Use `langgraph dev --allow-blocking` for development
+**Solution**: The backend uses `PROJECT_ROOT` (derived from `__file__`) instead of `os.getcwd()` for reports, memories, and working directories, so this error should no longer appear when using `langgraph dev`. If you still see blocking errors from other code:
+- For development: use `langgraph dev --allow-blocking`
+- For deployment: set `BG_JOB_ISOLATED_LOOPS=true`
 
 #### 4. "Request too large" error (Groq)
 
@@ -723,13 +713,13 @@ We're actively working on addressing these limitations. Key improvements planned
 - 🔍 Automated dependency vulnerability scanning
 
 **CI/CD & Testing:**
-- 🚀 Set up GitHub Actions CI/CD pipeline
+- 🚀 ~~GitHub Actions CI/CD~~ (done: Ruff + Pytest on push/PR)
+- 🔧 ~~Pre-commit hooks~~ (done: Ruff lint + format)
 - ✅ Increase test coverage to 80%+ (currently ~30%)
-- 🧪 Add integration and E2E tests
-- 🔧 Add pre-commit hooks for code quality
+- 🧪 Add more integration and E2E tests
 
 **Performance & Scalability:**
-- ⚡ Fix all blocking operations (async/await optimizations)
+- ⚡ Further async/await optimizations (storage/memory blocking I/O already offloaded under ASGI)
 - 🔄 Implement HTTP connection pooling
 - 📊 Add request queuing (Celery or similar)
 - ⚖️ Implement load balancing and auto-scaling

@@ -20,14 +20,10 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.agents.main_agent import get_main_agent
     from backend.agents.subagents import get_subagents
-    
+
     def create_comprehensive_mermaid_diagram():
         """Create a comprehensive Mermaid diagram showing all subagents."""
-        
-        # Get subagents information
-        subagents = get_subagents()
-        
-        # Build Mermaid diagram
+        # Build Mermaid diagram (subagent list is fixed in diagram below)
         mermaid = """---
 config:
   flowchart:
@@ -112,7 +108,7 @@ graph TB
     style API4 fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
 """
         return mermaid
-    
+
     def visualize_complete_architecture():
         """Generate complete architecture visualization with subagents."""
         print("=" * 60)
@@ -120,40 +116,40 @@ graph TB
         print("Including All Subagents and Tools")
         print("=" * 60)
         print()
-        
+
         # Get subagents info
         subagents = get_subagents()
         print(f"Found {len(subagents)} subagents:")
         for i, subagent in enumerate(subagents, 1):
-            tools_count = len(subagent.get('tools', []))
+            tools_count = len(subagent.get("tools", []))
             print(f"  {i}. {subagent['name']} ({tools_count} tools)")
         print()
-        
+
         # Create comprehensive Mermaid diagram
         mermaid_diagram = create_comprehensive_mermaid_diagram()
-        
+
         # Save Mermaid diagram
         output_file = project_root / "docs" / "complete_architecture.mmd"
         output_file.parent.mkdir(exist_ok=True)
         with open(output_file, "w") as f:
             f.write(mermaid_diagram)
         print(f"✅ Complete architecture diagram saved to: {output_file}")
-        
+
         # Also get the actual LangGraph visualization
         print("\n" + "=" * 60)
         print("LangGraph Internal Structure")
         print("=" * 60)
         print()
-        
+
         print("Creating agent to get LangGraph structure...")
         agent = get_main_agent()
         compiled_graph = agent
-        
-        if hasattr(compiled_graph, 'get_graph'):
+
+        if hasattr(compiled_graph, "get_graph"):
             graph = compiled_graph.get_graph()
-            
+
             # Get LangGraph's own visualization
-            if hasattr(graph, 'draw_mermaid'):
+            if hasattr(graph, "draw_mermaid"):
                 try:
                     langgraph_mermaid = graph.draw_mermaid()
                     langgraph_file = project_root / "docs" / "langgraph_internal.mmd"
@@ -162,7 +158,7 @@ graph TB
                     print(f"✅ LangGraph internal structure saved to: {langgraph_file}")
                 except Exception as e:
                     print(f"⚠️  Could not generate LangGraph internal diagram: {e}")
-            
+
             # Save PNG image
             print("\n" + "=" * 60)
             print("Saving Architecture Images")
@@ -170,49 +166,54 @@ graph TB
             try:
                 assets_dir = project_root / "assets"
                 assets_dir.mkdir(exist_ok=True)
-                
+
                 # Save LangGraph's internal structure as PNG
                 image_path = assets_dir / "langgraph_architecture.png"
                 with open(image_path, "wb") as f:
                     f.write(compiled_graph.get_graph().draw_mermaid_png())
                 print(f"✅ LangGraph internal structure image: {image_path}")
-                
+
             except Exception as e:
                 print(f"⚠️  Could not save PNG image: {e}")
-        
+
         # Try to convert Mermaid to PNG
         print("\n" + "=" * 60)
         print("Converting Complete Architecture to PNG")
         print("=" * 60)
         complete_png = project_root / "assets" / "complete_architecture.png"
-        
+
         # Import and use the conversion script
         try:
             # Add scripts directory to path for import
             scripts_dir = Path(__file__).parent
             if str(scripts_dir) not in sys.path:
                 sys.path.insert(0, str(scripts_dir))
-            
+
             from mermaid_to_png import convert_mermaid_to_png
+
             if convert_mermaid_to_png(output_file, complete_png):
                 print(f"\n✅ Complete architecture PNG saved to: {complete_png}")
             else:
-                print(f"\n⚠️  Automatic conversion failed. Run manually:")
-                print(f"   python backend/scripts/mermaid_to_png.py")
+                print("\n⚠️  Automatic conversion failed. Run manually:")
+                print("   python backend/scripts/mermaid_to_png.py")
         except Exception as e:
             print(f"⚠️  Could not convert to PNG automatically: {e}")
-            print(f"   Run manually: python backend/scripts/mermaid_to_png.py")
-        
+            print("   Run manually: python backend/scripts/mermaid_to_png.py")
+
         print("\n" + "=" * 60)
         print("✅ Complete architecture visualization generated!")
         print("=" * 60)
         print("\nGenerated files:")
-        print("  - docs/complete_architecture.mmd (Complete diagram with all subagents)")
+        print(
+            "  - docs/complete_architecture.mmd (Complete diagram with all subagents)"
+        )
         print("  - docs/langgraph_internal.mmd (LangGraph internal structure)")
         print("  - assets/langgraph_architecture.png (LangGraph internal PNG)")
         complete_png = project_root / "assets" / "complete_architecture.png"
         if complete_png.exists():
-            print(f"  - assets/complete_architecture.png (Complete architecture PNG - {complete_png.stat().st_size:,} bytes)")
+            print(
+                f"  - assets/complete_architecture.png (Complete architecture PNG - {complete_png.stat().st_size:,} bytes)"
+            )
         print("\n💡 The complete_architecture.mmd shows:")
         print("   • Main Orchestrator Agent")
         print("   • All 6 Subagents with their tools")
@@ -220,12 +221,13 @@ graph TB
         print("   • Data flow and connections")
         print("\n💡 To convert Mermaid to PNG:")
         print("   python backend/scripts/mermaid_to_png.py")
-        
+
     if __name__ == "__main__":
         visualize_complete_architecture()
-        
+
 except Exception as e:
     print(f"❌ Error generating visualization: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)

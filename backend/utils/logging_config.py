@@ -1,4 +1,5 @@
 """Centralized logging configuration for console and file."""
+
 import logging
 from pathlib import Path
 

@@ -1,4 +1,5 @@
 """Pytest configuration and fixtures."""
+
 import pytest
 import os
 import sys
@@ -20,7 +21,7 @@ def client():
 @pytest.fixture
 def mock_redis():
     """Mock Redis client."""
-    with patch('utils.cache.get_redis_client') as mock:
+    with patch("utils.cache.get_redis_client") as mock:
         mock_redis_client = Mock()
         mock_redis_client.get.return_value = None
         mock_redis_client.setex.return_value = True
@@ -33,11 +34,9 @@ def mock_redis():
 @pytest.fixture
 def mock_agent():
     """Mock main agent."""
-    with patch('agents.main_agent.get_main_agent') as mock:
+    with patch("agents.main_agent.get_main_agent") as mock:
         mock_agent = Mock()
-        mock_agent.invoke.return_value = {
-            "messages": [Mock(content="Test response")]
-        }
+        mock_agent.invoke.return_value = {"messages": [Mock(content="Test response")]}
         mock.return_value = mock_agent
         yield mock_agent
 
@@ -52,5 +51,5 @@ def sample_property_data():
         "baths": 2,
         "coordinates": {"lat": 37.7749, "lon": -122.4194},
         "listing_url": "https://example.com/property/123",
-        "main_photo": "https://example.com/photo.jpg"
+        "main_photo": "https://example.com/photo.jpg",
     }

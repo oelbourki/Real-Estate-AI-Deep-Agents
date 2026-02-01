@@ -1,30 +1,32 @@
+# Build from repo root (context: ..) so /app is project root and backend is a package.
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies (curl for lightweight healthcheck)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY backend/requirements.txt .
+# Copy backend requirements first for layer caching
+COPY backend/requirements.txt backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy full project (backend.* imports require project root on path)
+COPY . .
 
-# Copy application code
-COPY backend/ .
-
-# Create directories for reports and memories
+# Create directories for reports and memories (used by backend)
 RUN mkdir -p reports memories
 
-# Expose port
+# Root-based runs: backend is a package; short imports need backend on path too
+ENV PYTHONPATH=/app:/app/backend
+
 EXPOSE 8000
 
-# Health check
+# Health check (curl is lighter than loading Python/requests)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Run the application
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run from project root so backend.api.main resolves
+CMD ["uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

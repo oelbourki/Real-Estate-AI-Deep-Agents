@@ -47,7 +47,6 @@ pytest==8.3.3
 pytest-asyncio==0.24.0
 pytest-cov==5.0.0
 pytest-mock==3.14.0
-black==24.4.2
 ruff==0.5.6
 mypy==1.10.1
 aiohttp==3.10.11  # For load testing

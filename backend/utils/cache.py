@@ -1,4 +1,5 @@
 """Redis caching layer for API responses and expensive operations."""
+
 import redis
 import json
 import hashlib
@@ -17,10 +18,10 @@ _redis_client: Optional[redis.Redis] = None
 def get_redis_client() -> Optional[redis.Redis]:
     """Get or create Redis client."""
     global _redis_client
-    
+
     if _redis_client is not None:
         return _redis_client
-    
+
     try:
         if settings.redis_url:
             _redis_client = redis.from_url(
@@ -43,10 +44,7 @@ def get_redis_client() -> Optional[redis.Redis]:
 
 def cache_key(*args, **kwargs) -> str:
     """Generate cache key from function arguments."""
-    key_data = {
-        "args": args,
-        "kwargs": sorted(kwargs.items())
-    }
+    key_data = {"args": args, "kwargs": sorted(kwargs.items())}
     key_string = json.dumps(key_data, sort_keys=True, default=str)
     return hashlib.md5(key_string.encode()).hexdigest()
 
@@ -54,11 +52,12 @@ def cache_key(*args, **kwargs) -> str:
 def cached(ttl: int = 3600, prefix: str = "cache"):
     """
     Decorator for caching function results.
-    
+
     Args:
         ttl: Time to live in seconds (default: 1 hour)
         prefix: Cache key prefix
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -66,32 +65,33 @@ def cached(ttl: int = 3600, prefix: str = "cache"):
             if not client:
                 # Redis not available, execute function directly
                 return func(*args, **kwargs)
-            
+
             # Generate cache key
             key = f"{prefix}:{func.__name__}:{cache_key(*args, **kwargs)}"
-            
+
             try:
                 # Try to get from cache
                 cached_value = client.get(key)
                 if cached_value:
                     logger.debug(f"Cache hit for {key}")
                     return pickle.loads(cached_value)
-                
+
                 # Cache miss, execute function
                 logger.debug(f"Cache miss for {key}")
                 result = func(*args, **kwargs)
-                
+
                 # Store in cache
                 client.setex(key, ttl, pickle.dumps(result))
                 logger.debug(f"Cached result for {key} (TTL: {ttl}s)")
-                
+
                 return result
             except Exception as e:
                 logger.error(f"Cache error for {key}: {e}")
                 # On cache error, execute function directly
                 return func(*args, **kwargs)
-        
+
         return wrapper
+
     return decorator
 
 
@@ -100,7 +100,7 @@ def cache_set(key: str, value: Any, ttl: int = 3600) -> bool:
     client = get_redis_client()
     if not client:
         return False
-    
+
     try:
         client.setex(key, ttl, pickle.dumps(value))
         return True
@@ -114,7 +114,7 @@ def cache_get(key: str) -> Optional[Any]:
     client = get_redis_client()
     if not client:
         return None
-    
+
     try:
         cached_value = client.get(key)
         if cached_value:
@@ -130,7 +130,7 @@ def cache_delete(key: str) -> bool:
     client = get_redis_client()
     if not client:
         return False
-    
+
     try:
         client.delete(key)
         return True
@@ -144,7 +144,7 @@ def cache_clear_pattern(pattern: str) -> int:
     client = get_redis_client()
     if not client:
         return 0
-    
+
     try:
         keys = client.keys(pattern)
         if keys:

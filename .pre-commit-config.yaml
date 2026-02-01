@@ -1,0 +1,10 @@
+# Pre-commit hooks for code quality (run: pre-commit install)
+# https://pre-commit.com/
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.6
+    hooks:
+      - id: ruff
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/

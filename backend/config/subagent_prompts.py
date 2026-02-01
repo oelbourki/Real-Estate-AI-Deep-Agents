@@ -1,4 +1,5 @@
 """System prompts for subagents."""
+
 from datetime import datetime
 
 CURRENT_DATE = datetime.now().strftime("%Y-%m-%d")

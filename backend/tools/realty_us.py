@@ -1,4 +1,5 @@
 """RealtyUS API tools for property search."""
+
 from typing import Optional
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
@@ -59,14 +60,34 @@ def _normalize_location(location: str) -> str:
 
 class RealtyUSSearchBuyInput(BaseModel):
     """Input schema for RealtyUS search buy tool."""
-    location: str = Field(..., description="Search location. Use 'city:City Name, ST' (e.g. 'city:San Francisco, CA') or natural language like 'San Francisco', 'san fransicso', 'NYC'; typos and nicknames are normalized automatically.")
-    resultsPerPage: Optional[int] = Field(8, ge=8, le=200, description="Number of results per page (8–200). Default is 8.")
-    page: Optional[int] = Field(1, ge=1, description="Page number for pagination. Default is 1.")
-    sortBy: Optional[str] = Field('relevance', description="Sort order. One of: 'relevance', 'newest', 'lowest_price', 'highest_price', 'open_house_date', 'price_reduced', 'largest_squarefoot', 'photo_count'. Default is 'relevance'.")
-    propertyType: Optional[str] = Field(None, description="Comma-separated property types. E.g., 'condo,co_op'. Options: 'condo', 'co_op', 'cond_op', 'townhome', 'single_family_home', 'multi_family', 'mobile_mfd', 'farm_ranch', 'land'.")
-    prices: Optional[str] = Field(None, description="Price range as 'min,max', 'min,', or ',max'.")
-    bedrooms: Optional[int] = Field(None, ge=0, le=5, description="Minimum number of bedrooms (0–5).")
-    bathrooms: Optional[int] = Field(None, ge=1, le=5, description="Minimum number of bathrooms (1–5).")
+
+    location: str = Field(
+        ...,
+        description="Search location. Use 'city:City Name, ST' (e.g. 'city:San Francisco, CA') or natural language like 'San Francisco', 'san fransicso', 'NYC'; typos and nicknames are normalized automatically.",
+    )
+    resultsPerPage: Optional[int] = Field(
+        8, ge=8, le=200, description="Number of results per page (8–200). Default is 8."
+    )
+    page: Optional[int] = Field(
+        1, ge=1, description="Page number for pagination. Default is 1."
+    )
+    sortBy: Optional[str] = Field(
+        "relevance",
+        description="Sort order. One of: 'relevance', 'newest', 'lowest_price', 'highest_price', 'open_house_date', 'price_reduced', 'largest_squarefoot', 'photo_count'. Default is 'relevance'.",
+    )
+    propertyType: Optional[str] = Field(
+        None,
+        description="Comma-separated property types. E.g., 'condo,co_op'. Options: 'condo', 'co_op', 'cond_op', 'townhome', 'single_family_home', 'multi_family', 'mobile_mfd', 'farm_ranch', 'land'.",
+    )
+    prices: Optional[str] = Field(
+        None, description="Price range as 'min,max', 'min,', or ',max'."
+    )
+    bedrooms: Optional[int] = Field(
+        None, ge=0, le=5, description="Minimum number of bedrooms (0–5)."
+    )
+    bathrooms: Optional[int] = Field(
+        None, ge=1, le=5, description="Minimum number of bathrooms (1–5)."
+    )
 
 
 @tool("realty_us_search_buy", args_schema=RealtyUSSearchBuyInput)
@@ -76,14 +97,14 @@ def realty_us_search_buy(
     location: str,
     resultsPerPage: int = 8,
     page: int = 1,
-    sortBy: str = 'relevance',
+    sortBy: str = "relevance",
     propertyType: Optional[str] = None,
     prices: Optional[str] = None,
     bedrooms: Optional[int] = None,
     bathrooms: Optional[int] = None,
 ) -> dict:
     """
-    Search for properties listed for sale in the US only, using the Realty-US API. 
+    Search for properties listed for sale in the US only, using the Realty-US API.
     Returns a list of properties and their details.
     """
     if not settings.rapidapi_key:
@@ -94,7 +115,7 @@ def realty_us_search_buy(
     url = "https://realty-us.p.rapidapi.com/properties/search-buy"
     headers = {
         "x-rapidapi-key": settings.rapidapi_key,
-        "x-rapidapi-host": "realty-us.p.rapidapi.com"
+        "x-rapidapi-host": "realty-us.p.rapidapi.com",
     }
     payload = {
         "location": location,
@@ -103,7 +124,7 @@ def realty_us_search_buy(
         "sortBy": sortBy,
         "hidePendingContingent": True,
         "hideHomesNotYetBuilt": True,
-        "hideForeclosures": True
+        "hideForeclosures": True,
     }
     if propertyType:
         payload["propertyType"] = propertyType
@@ -113,7 +134,7 @@ def realty_us_search_buy(
         payload["bedrooms"] = bedrooms
     if bathrooms is not None:
         payload["bathrooms"] = bathrooms
-    
+
     try:
         response = requests.get(url, headers=headers, params=payload, timeout=10)
         response.raise_for_status()
@@ -126,21 +147,25 @@ def realty_us_search_buy(
             beds = prop.get("description", {}).get("beds")
             baths = prop.get("description", {}).get("baths")
             main_photo = prop.get("primary_photo", {}).get("href")
-            all_photos = [p.get("href") for p in prop.get("photos", []) if p.get("href")]
+            all_photos = [
+                p.get("href") for p in prop.get("photos", []) if p.get("href")
+            ]
             listing_url = prop.get("href")
             coordinates = prop.get("location", {}).get("address", {}).get("coordinate")
             list_date = prop.get("list_date")
-            simplified.append({
-                "address": address,
-                "price": price,
-                "beds": beds,
-                "baths": baths,
-                "main_photo": main_photo,
-                "all_photos": all_photos,
-                "listing_url": listing_url,
-                "coordinates": coordinates,
-                "list_date": list_date
-            })
+            simplified.append(
+                {
+                    "address": address,
+                    "price": price,
+                    "beds": beds,
+                    "baths": baths,
+                    "main_photo": main_photo,
+                    "all_photos": all_photos,
+                    "listing_url": listing_url,
+                    "coordinates": coordinates,
+                    "list_date": list_date,
+                }
+            )
         return {"results": simplified, "total": len(simplified)}
     except requests.exceptions.RequestException as e:
         return {"error": str(e), "results": [], "total": 0}
@@ -148,15 +173,38 @@ def realty_us_search_buy(
 
 class RealtyUSSearchRentInput(BaseModel):
     """Input schema for RealtyUS search rent tool."""
-    location: str = Field(..., description="Search location. Use 'city:City Name, ST' (e.g. 'city:San Francisco, CA') or natural language like 'San Francisco', 'san fransicso', 'NYC'; typos and nicknames are normalized automatically.")
-    resultsPerPage: Optional[int] = Field(8, ge=8, le=200, description="Number of results per page (8–200). Default is 8.")
-    page: Optional[int] = Field(1, ge=1, description="Page number for pagination. Default is 1.")
-    sortBy: Optional[str] = Field('relevance', description="Sort order. One of: 'relevance', 'newest', 'lowest_price', 'highest_price', 'open_house_date', 'price_reduced', 'largest_squarefoot', 'photo_count'. Default is 'relevance'.")
-    propertyType: Optional[str] = Field(None, description="Comma-separated property types. E.g., 'condo,co_op'. Options: 'condo', 'co_op', 'cond_op', 'townhome', 'single_family_home', 'multi_family', 'mobile_mfd', 'farm_ranch', 'land'.")
-    prices: Optional[str] = Field(None, description="Price range as 'min,max', 'min,', or ',max'.")
-    bedrooms: Optional[int] = Field(None, ge=0, le=5, description="Minimum number of bedrooms (0–5).")
-    bathrooms: Optional[int] = Field(None, ge=1, le=5, description="Minimum number of bathrooms (1–5).")
-    pets: Optional[str] = Field(None, description="Comma-separated pet options. E.g., 'cats,dogs'. Options: 'cats', 'dogs', 'no_pets_allowed'.")
+
+    location: str = Field(
+        ...,
+        description="Search location. Use 'city:City Name, ST' (e.g. 'city:San Francisco, CA') or natural language like 'San Francisco', 'san fransicso', 'NYC'; typos and nicknames are normalized automatically.",
+    )
+    resultsPerPage: Optional[int] = Field(
+        8, ge=8, le=200, description="Number of results per page (8–200). Default is 8."
+    )
+    page: Optional[int] = Field(
+        1, ge=1, description="Page number for pagination. Default is 1."
+    )
+    sortBy: Optional[str] = Field(
+        "relevance",
+        description="Sort order. One of: 'relevance', 'newest', 'lowest_price', 'highest_price', 'open_house_date', 'price_reduced', 'largest_squarefoot', 'photo_count'. Default is 'relevance'.",
+    )
+    propertyType: Optional[str] = Field(
+        None,
+        description="Comma-separated property types. E.g., 'condo,co_op'. Options: 'condo', 'co_op', 'cond_op', 'townhome', 'single_family_home', 'multi_family', 'mobile_mfd', 'farm_ranch', 'land'.",
+    )
+    prices: Optional[str] = Field(
+        None, description="Price range as 'min,max', 'min,', or ',max'."
+    )
+    bedrooms: Optional[int] = Field(
+        None, ge=0, le=5, description="Minimum number of bedrooms (0–5)."
+    )
+    bathrooms: Optional[int] = Field(
+        None, ge=1, le=5, description="Minimum number of bathrooms (1–5)."
+    )
+    pets: Optional[str] = Field(
+        None,
+        description="Comma-separated pet options. E.g., 'cats,dogs'. Options: 'cats', 'dogs', 'no_pets_allowed'.",
+    )
 
 
 @tool("realty_us_search_rent", args_schema=RealtyUSSearchRentInput)
@@ -166,7 +214,7 @@ def realty_us_search_rent(
     location: str,
     resultsPerPage: int = 8,
     page: int = 1,
-    sortBy: str = 'relevance',
+    sortBy: str = "relevance",
     propertyType: Optional[str] = None,
     prices: Optional[str] = None,
     bedrooms: Optional[int] = None,
@@ -174,7 +222,7 @@ def realty_us_search_rent(
     pets: Optional[str] = None,
 ) -> dict:
     """
-    Search for properties listed for rent in the US only, using the Realty-US API. 
+    Search for properties listed for rent in the US only, using the Realty-US API.
     Returns a list of rental properties and their details.
     """
     if not settings.rapidapi_key:
@@ -185,13 +233,13 @@ def realty_us_search_rent(
     url = "https://realty-us.p.rapidapi.com/properties/search-rent"
     headers = {
         "x-rapidapi-key": settings.rapidapi_key,
-        "x-rapidapi-host": "realty-us.p.rapidapi.com"
+        "x-rapidapi-host": "realty-us.p.rapidapi.com",
     }
     payload = {
         "location": location,
         "resultsPerPage": resultsPerPage,
         "page": page,
-        "sortBy": sortBy
+        "sortBy": sortBy,
     }
     if propertyType:
         payload["propertyType"] = propertyType
@@ -203,7 +251,7 @@ def realty_us_search_rent(
         payload["bathrooms"] = bathrooms
     if pets:
         payload["pets"] = pets
-    
+
     try:
         response = requests.get(url, headers=headers, params=payload, timeout=10)
         response.raise_for_status()
@@ -216,21 +264,25 @@ def realty_us_search_rent(
             beds = prop.get("description", {}).get("beds")
             baths = prop.get("description", {}).get("baths")
             main_photo = prop.get("primary_photo", {}).get("href")
-            all_photos = [p.get("href") for p in prop.get("photos", []) if p.get("href")]
+            all_photos = [
+                p.get("href") for p in prop.get("photos", []) if p.get("href")
+            ]
             listing_url = prop.get("href")
             coordinates = prop.get("location", {}).get("address", {}).get("coordinate")
             list_date = prop.get("list_date")
-            simplified.append({
-                "address": address,
-                "price": price,
-                "beds": beds,
-                "baths": baths,
-                "main_photo": main_photo,
-                "all_photos": all_photos,
-                "listing_url": listing_url,
-                "coordinates": coordinates,
-                "list_date": list_date
-            })
+            simplified.append(
+                {
+                    "address": address,
+                    "price": price,
+                    "beds": beds,
+                    "baths": baths,
+                    "main_photo": main_photo,
+                    "all_photos": all_photos,
+                    "listing_url": listing_url,
+                    "coordinates": coordinates,
+                    "list_date": list_date,
+                }
+            )
         return {"results": simplified, "total": len(simplified)}
     except requests.exceptions.RequestException as e:
         return {"error": str(e), "results": [], "total": 0}

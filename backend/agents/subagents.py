@@ -1,4 +1,5 @@
 """Subagent definitions for specialized real estate tasks."""
+
 from typing import List
 from deepagents.middleware.subagents import SubAgent
 from backend.config.subagent_prompts import (
@@ -14,13 +15,13 @@ from backend.tools.location import (
     geocode_address,
     osm_poi_search,
     osm_route,
-    find_nearby_amenities
+    find_nearby_amenities,
 )
 from backend.tools.financial import (
     calculate_roi,
     estimate_mortgage,
     calculate_property_tax,
-    compare_properties
+    compare_properties,
 )
 from backend.tools.web_scraping import (
     scrape_property_page,
@@ -33,7 +34,7 @@ from backend.tools.redfin_api import redfin_get_price_history
 from backend.tools.market_research import (
     search_market_trends,
     get_price_history,
-    compare_markets
+    compare_markets,
 )
 import logging
 
@@ -43,7 +44,7 @@ logger = logging.getLogger(__name__)
 def get_subagents() -> List[SubAgent]:
     """
     Get list of subagent definitions.
-    
+
     Returns:
         List of SubAgent dictionaries
     """
@@ -111,6 +112,6 @@ def get_subagents() -> List[SubAgent]:
             "tools": [],  # Uses filesystem tools from DeepAgents middleware
         },
     ]
-    
+
     logger.info(f"Created {len(subagents)} subagents")
     return subagents

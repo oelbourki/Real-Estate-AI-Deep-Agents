@@ -1,5 +1,7 @@
 """Main orchestrator agent using DeepAgents framework."""
+
 from deepagents import create_deep_agent
+
 # Updated for LangChain v1.0 - init_chat_model moved
 try:
     from langchain_core.language_models import init_chat_model
@@ -8,8 +10,10 @@ except ImportError:
     from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import MemorySaver
 from backend.config.settings import settings
+
 try:
     from langchain_ollama import ChatOllama
+
     OLLAMA_AVAILABLE = True
 except ImportError:
     OLLAMA_AVAILABLE = False
@@ -32,13 +36,13 @@ logger = logging.getLogger(__name__)
 def create_main_agent():
     """
     Create the main orchestrator agent with DeepAgents framework.
-    
+
     Returns:
         Compiled LangGraph StateGraph agent
     """
     # Setup LangSmith tracing
     setup_langsmith()
-    
+
     # Initialize LLM (Priority: OpenRouter -> Ollama -> OpenAI -> Groq -> Anthropic -> Google)
     try:
         model = None
@@ -48,6 +52,7 @@ def create_main_agent():
             try:
                 # OpenRouter uses OpenAI-compatible API, so we use langchain-openai with custom base_url
                 from langchain_openai import ChatOpenAI
+
                 openrouter_model = settings.openrouter_model
                 model = ChatOpenAI(
                     model=openrouter_model,
@@ -55,15 +60,19 @@ def create_main_agent():
                     base_url=settings.openrouter_base_url,
                     default_headers={
                         "HTTP-Referer": "https://github.com/oelbourki",  # Optional: for analytics
-                        "X-Title": "Real Estate AI Deep Agents"  # Optional: for analytics
-                    }
+                        "X-Title": "Real Estate AI Deep Agents",  # Optional: for analytics
+                    },
                 )
-                logger.info(f"✅ Initialized OpenRouter model: {openrouter_model} at {settings.openrouter_base_url}")
+                logger.info(
+                    f"✅ Initialized OpenRouter model: {openrouter_model} at {settings.openrouter_base_url}"
+                )
                 model_initialized = True
             except Exception as openrouter_error:
-                logger.warning(f"⚠️  OpenRouter initialization failed: {openrouter_error}")
+                logger.warning(
+                    f"⚠️  OpenRouter initialization failed: {openrouter_error}"
+                )
                 logger.info("Falling back to other LLM providers...")
-        
+
         # Try Ollama (local, no API key needed)
         elif model is None and OLLAMA_AVAILABLE:
             try:
@@ -74,7 +83,9 @@ def create_main_agent():
                         model=ollama_model_name,
                         base_url=settings.ollama_base_url,
                     )
-                    logger.info(f"✅ Initialized Ollama model: {ollama_model_name} at {settings.ollama_base_url}")
+                    logger.info(
+                        f"✅ Initialized Ollama model: {ollama_model_name} at {settings.ollama_base_url}"
+                    )
                     model_initialized = True
                 except Exception as direct_error:
                     # Fallback to init_chat_model
@@ -82,9 +93,11 @@ def create_main_agent():
                         model = init_chat_model(
                             f"ollama:{ollama_model_name}",
                             base_url=settings.ollama_base_url,
-                            api_key=settings.ollama_api_key  # Optional, only for remote Ollama
+                            api_key=settings.ollama_api_key,  # Optional, only for remote Ollama
                         )
-                        logger.info(f"✅ Initialized Ollama model: {ollama_model_name} at {settings.ollama_base_url}")
+                        logger.info(
+                            f"✅ Initialized Ollama model: {ollama_model_name} at {settings.ollama_base_url}"
+                        )
                         model_initialized = True
                     except Exception as init_error:
                         raise direct_error from init_error
@@ -100,58 +113,57 @@ def create_main_agent():
                 )
         else:
             logger.warning(
-                f"⚠️  langchain-ollama package not installed. Install with: pip install langchain-ollama\n"
-                f"   Falling back to other LLM providers..."
+                "⚠️  langchain-ollama package not installed. Install with: pip install langchain-ollama\n"
+                "   Falling back to other LLM providers..."
             )
-        
+
         # Fallback to other providers if Ollama not available
         if not model_initialized:
             if settings.openai_api_key:
                 try:
-                    openai_model = settings.default_model if "openai:" in settings.default_model else "openai:gpt-oss-20b"
+                    openai_model = (
+                        settings.default_model
+                        if "openai:" in settings.default_model
+                        else "openai:gpt-oss-20b"
+                    )
                     model = init_chat_model(
-                        openai_model,
-                        api_key=settings.openai_api_key
+                        openai_model, api_key=settings.openai_api_key
                     )
                     logger.info(f"Initialized OpenAI model: {openai_model}")
                     model_initialized = True
                 except Exception as e:
                     logger.warning(f"OpenAI initialization failed: {e}")
-            
+
             if not model_initialized and settings.groq_api_key:
                 try:
                     groq_model = "groq:qwen/qwen3-32b"  # Default Groq model
-                    model = init_chat_model(
-                        groq_model,
-                        api_key=settings.groq_api_key
-                    )
+                    model = init_chat_model(groq_model, api_key=settings.groq_api_key)
                     logger.info(f"Initialized Groq model: {groq_model}")
                     model_initialized = True
                 except Exception as e:
                     logger.warning(f"Groq initialization failed: {e}")
-            
+
             if not model_initialized and settings.anthropic_api_key:
                 try:
                     model = init_chat_model(
                         "anthropic:claude-sonnet-4-5-20250929",
-                        api_key=settings.anthropic_api_key
+                        api_key=settings.anthropic_api_key,
                     )
                     logger.info("Initialized Anthropic Claude model")
                     model_initialized = True
                 except Exception as e:
                     logger.warning(f"Anthropic initialization failed: {e}")
-            
+
             if not model_initialized and settings.google_api_key:
                 try:
                     model = init_chat_model(
-                        "google:gemini-2.0-flash-exp",
-                        api_key=settings.google_api_key
+                        "google:gemini-2.0-flash-exp", api_key=settings.google_api_key
                     )
                     logger.info("Initialized Google Gemini model")
                     model_initialized = True
                 except Exception as e:
                     logger.warning(f"Google initialization failed: {e}")
-        
+
         # If no model was initialized, raise error
         if not model_initialized:
             raise ValueError(
@@ -170,27 +182,27 @@ def create_main_agent():
     except Exception as e:
         logger.error(f"Failed to initialize LLM: {e}", exc_info=True)
         raise
-    
+
     # Real estate tools (direct tools for simple queries)
     tools = [
         realty_us_search_buy,
         realty_us_search_rent,
     ]
     logger.info(f"Loaded {len(tools)} direct tools")
-    
+
     # Get subagents (Phase 2)
     subagents = get_subagents()
     logger.info(f"Loaded {len(subagents)} subagents")
-    
+
     # Create backend (Phase 3: Composite backend with filesystem)
     backend = get_backend()
-    
+
     # Create checkpointer for conversation memory
     checkpointer = MemorySaver()
-    
+
     # Get HITL configuration (Phase 4)
     interrupt_on = get_hitl_config()
-    
+
     # Create the deep agent
     try:
         agent = create_deep_agent(
