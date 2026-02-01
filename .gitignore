@@ -247,8 +247,9 @@ build/
 .DS_Store
 Thumbs.db
 
-# Test files
+# Test files (ignore at repo root; keep under tests/)
 test_*.py
+!**/tests/**/test_*.py
 !tests/
 
 docs-md/
