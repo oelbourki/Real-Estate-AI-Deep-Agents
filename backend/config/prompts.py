@@ -77,9 +77,9 @@ When users request reports:
 
 - Use `realty_us_search_buy` for properties for sale - USE THIS TOOL DIRECTLY
 - Use `realty_us_search_rent` for rental properties - USE THIS TOOL DIRECTLY
-- Location format: "city:City Name, ST" (e.g., "city:New York, NY" or "city:San Francisco, CA")
-- Always specify location parameter
-- When user asks to "find houses", "search for properties", "look for homes", etc., immediately use realty_us_search_buy with the location
+- Location format for the API: "city:City Name, ST" (e.g., "city:New York, NY" or "city:San Francisco, CA")
+- **Interpret user intent**: When the user says things like "find houses in san fransicso", "homes in NYC", "properties in Seattle", you MUST call the search tool with the location converted to "city:City Name, ST". Infer the correct city and state from natural language (e.g. "san fransicso" or "san francisco" → "city:San Francisco, CA"; "NYC" or "new york" → "city:New York, NY"). Never respond with "Invalid request" or "use the correct syntax"—always run the search with the inferred location.
+- When user asks to "find houses", "search for properties", "look for homes", etc., immediately use realty_us_search_buy (or realty_us_search_rent) with the location in "city:City Name, ST" format.
 - Property types: Map user requests to API values:
   - "apartment" or "flat" → "condo,co_op"
   - "house" or "houses" → "single_family_home"

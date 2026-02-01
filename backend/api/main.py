@@ -19,12 +19,10 @@ from utils.message_serializer import serialize_messages
 from utils.monitoring import setup_langsmith, metrics_collector
 from utils.cache import cached
 from utils.token_counter import validate_token_limit
+from utils.logging_config import setup_logging
 
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+# Configure logging (console + file)
+setup_logging()
 logger = logging.getLogger(__name__)
 
 # Setup LangSmith tracing
@@ -275,9 +273,8 @@ async def chat(request: ChatRequest, http_request: Request):
     description="Search for properties directly without going through the agent. Returns raw property data."
 )
 async def search_properties(
-    query: str = Body(..., embed=True),
+    location: str = Body(..., embed=True, description="Search location (e.g. 'San Francisco, CA')"),
     property_type: Optional[str] = Body(None, embed=True),
-    location: Optional[str] = Body(None, embed=True),
     min_price: Optional[int] = Body(None, embed=True),
     max_price: Optional[int] = Body(None, embed=True),
     bedrooms: Optional[int] = Body(None, embed=True),
@@ -291,11 +288,7 @@ async def search_properties(
     """
     try:
         from tools.realty_us import realty_us_search_buy
-        
-        # Build location string
-        if not location:
-            raise HTTPException(status_code=400, detail="Location is required")
-        
+
         location_str = f"city:{location}" if not location.startswith("city:") else location
         
         # Build price range

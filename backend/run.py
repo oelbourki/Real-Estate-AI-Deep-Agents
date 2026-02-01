@@ -2,13 +2,10 @@
 """Run script for the Real Estate AI Deep Agents backend."""
 import uvicorn
 from config.settings import settings
-import logging
+from utils.logging_config import setup_logging
 
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+# Configure logging (console + file)
+setup_logging()
 
 if __name__ == "__main__":
     uvicorn.run(

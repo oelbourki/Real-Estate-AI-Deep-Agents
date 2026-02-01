@@ -2,15 +2,64 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
+import re
 import requests
 from backend.config.settings import settings
 from backend.utils.retry import retry_on_http_error
 from backend.utils.cache import cached
 
+# Common city name corrections (typos / nicknames -> "City Name, ST") for API
+_LOCATION_NORMALIZE = {
+    "san fransicso": "San Francisco, CA",
+    "san francisco": "San Francisco, CA",
+    "sf": "San Francisco, CA",
+    "nyc": "New York, NY",
+    "new york city": "New York, NY",
+    "new york": "New York, NY",
+    "la": "Los Angeles, CA",
+    "los angeles": "Los Angeles, CA",
+    "seattle": "Seattle, WA",
+    "chicago": "Chicago, IL",
+    "austin": "Austin, TX",
+    "miami": "Miami, FL",
+    "boston": "Boston, MA",
+    "denver": "Denver, CO",
+    "phoenix": "Phoenix, AZ",
+    "dallas": "Dallas, TX",
+    "houston": "Houston, TX",
+    "san diego": "San Diego, CA",
+    "portland": "Portland, OR",
+    "las vegas": "Las Vegas, NV",
+    "atlanta": "Atlanta, GA",
+    "philadelphia": "Philadelphia, PA",
+    "washington dc": "Washington, DC",
+    "washington d.c.": "Washington, DC",
+}
+
+
+def _normalize_location(location: str) -> str:
+    """Ensure location is in 'city:City Name, ST' format for Realty-US API."""
+    raw = (location or "").strip()
+    if not raw:
+        return raw
+    # Already in city: format
+    if raw.lower().startswith("city:"):
+        return raw
+    # Try to match known city names (typos / nicknames)
+    key = re.sub(r"\s+", " ", raw.lower()).strip()
+    if key in _LOCATION_NORMALIZE:
+        return "city:" + _LOCATION_NORMALIZE[key]
+    # If it looks like "City, ST" or "City Name", add "city:" prefix
+    if "," in raw and len(raw) <= 80:
+        return "city:" + raw
+    if raw and len(raw) <= 80:
+        return "city:" + raw
+    return raw
+
 
 class RealtyUSSearchBuyInput(BaseModel):
     """Input schema for RealtyUS search buy tool."""
-    location: str = Field(..., description="Search location. Format: 'city:City Name, ST' (e.g., 'city:New York, NY'). Case-sensitive and must match exactly.")
+    location: str = Field(..., description="Search location. Use 'city:City Name, ST' (e.g. 'city:San Francisco, CA') or natural language like 'San Francisco', 'san fransicso', 'NYC'; typos and nicknames are normalized automatically.")
     resultsPerPage: Optional[int] = Field(8, ge=8, le=200, description="Number of results per page (8–200). Default is 8.")
     page: Optional[int] = Field(1, ge=1, description="Page number for pagination. Default is 1.")
     sortBy: Optional[str] = Field('relevance', description="Sort order. One of: 'relevance', 'newest', 'lowest_price', 'highest_price', 'open_house_date', 'price_reduced', 'largest_squarefoot', 'photo_count'. Default is 'relevance'.")
@@ -38,8 +87,10 @@ def realty_us_search_buy(
     Returns a list of properties and their details.
     """
     if not settings.rapidapi_key:
-        return {"error": "RAPIDAPI_KEY not configured", "results": []}
-    
+        return {"error": "RAPIDAPI_KEY not configured", "results": [], "total": 0}
+
+    location = _normalize_location(location)
+
     url = "https://realty-us.p.rapidapi.com/properties/search-buy"
     headers = {
         "x-rapidapi-key": settings.rapidapi_key,
@@ -92,12 +143,12 @@ def realty_us_search_buy(
             })
         return {"results": simplified, "total": len(simplified)}
     except requests.exceptions.RequestException as e:
-        return {"error": str(e), "results": []}
+        return {"error": str(e), "results": [], "total": 0}
 
 
 class RealtyUSSearchRentInput(BaseModel):
     """Input schema for RealtyUS search rent tool."""
-    location: str = Field(..., description="Search location. Format: 'city:City Name, ST' (e.g., 'city:New York, NY'). Case-sensitive and must match exactly.")
+    location: str = Field(..., description="Search location. Use 'city:City Name, ST' (e.g. 'city:San Francisco, CA') or natural language like 'San Francisco', 'san fransicso', 'NYC'; typos and nicknames are normalized automatically.")
     resultsPerPage: Optional[int] = Field(8, ge=8, le=200, description="Number of results per page (8–200). Default is 8.")
     page: Optional[int] = Field(1, ge=1, description="Page number for pagination. Default is 1.")
     sortBy: Optional[str] = Field('relevance', description="Sort order. One of: 'relevance', 'newest', 'lowest_price', 'highest_price', 'open_house_date', 'price_reduced', 'largest_squarefoot', 'photo_count'. Default is 'relevance'.")
@@ -127,8 +178,10 @@ def realty_us_search_rent(
     Returns a list of rental properties and their details.
     """
     if not settings.rapidapi_key:
-        return {"error": "RAPIDAPI_KEY not configured", "results": []}
-    
+        return {"error": "RAPIDAPI_KEY not configured", "results": [], "total": 0}
+
+    location = _normalize_location(location)
+
     url = "https://realty-us.p.rapidapi.com/properties/search-rent"
     headers = {
         "x-rapidapi-key": settings.rapidapi_key,
@@ -180,4 +233,4 @@ def realty_us_search_rent(
             })
         return {"results": simplified, "total": len(simplified)}
     except requests.exceptions.RequestException as e:
-        return {"error": str(e), "results": []}
+        return {"error": str(e), "results": [], "total": 0}

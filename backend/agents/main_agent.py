@@ -20,9 +20,12 @@ from backend.agents.subagents import get_subagents
 from backend.backends.storage import get_backend
 from backend.backends.memory import get_memory_paths
 from backend.utils.monitoring import setup_langsmith
+from backend.utils.logging_config import setup_logging
 from backend.config.hitl_config import get_hitl_config
 import logging
 
+# Configure logging to console + file (so langgraph dev also writes to backend/logs/app.log)
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +43,6 @@ def create_main_agent():
     try:
         model = None
         model_initialized = False
-        print(f"OpenRouter API key: {settings.openrouter_api_key}")
         # Try OpenRouter first (default, unified API for 300+ models)
         if settings.openrouter_api_key:
             try:
@@ -52,7 +54,7 @@ def create_main_agent():
                     api_key=settings.openrouter_api_key,
                     base_url=settings.openrouter_base_url,
                     default_headers={
-                        "HTTP-Referer": "https://github.com/your-repo",  # Optional: for analytics
+                        "HTTP-Referer": "https://github.com/oelbourki",  # Optional: for analytics
                         "X-Title": "Real Estate AI Deep Agents"  # Optional: for analytics
                     }
                 )
@@ -63,7 +65,7 @@ def create_main_agent():
                 logger.info("Falling back to other LLM providers...")
         
         # Try Ollama (local, no API key needed)
-        if OLLAMA_AVAILABLE:
+        elif model is None and OLLAMA_AVAILABLE:
             try:
                 ollama_model_name = settings.ollama_model
                 # Try direct ChatOllama first (more reliable)

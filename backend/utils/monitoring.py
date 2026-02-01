@@ -146,12 +146,12 @@ def monitor_performance(func):
 
 def setup_langsmith():
     """Setup LangSmith tracing if configured."""
-    if settings.langchain_tracing_v2 and settings.langchain_api_key:
+    if settings.langsmith_tracing and settings.langsmith_api_key:
         import os
-        os.environ["LANGCHAIN_TRACING_V2"] = "true"
-        os.environ["LANGCHAIN_ENDPOINT"] = settings.langchain_endpoint
-        os.environ["LANGCHAIN_API_KEY"] = settings.langchain_api_key
-        os.environ["LANGCHAIN_PROJECT"] = settings.langchain_project
-        logger.info(f"LangSmith tracing enabled for project: {settings.langchain_project}")
+        os.environ["LANGSMITH_TRACING"] = "true"
+        os.environ["LANGSMITH_ENDPOINT"] = settings.langsmith_endpoint
+        os.environ["LANGSMITH_API_KEY"] = settings.langsmith_api_key
+        os.environ["LANGSMITH_PROJECT"] = settings.langsmith_project
+        logger.info(f"LangSmith tracing enabled for project: {settings.langsmith_project}")
     else:
         logger.info("LangSmith tracing not configured")

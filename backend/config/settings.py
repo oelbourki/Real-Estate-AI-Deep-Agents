@@ -71,13 +71,14 @@ class Settings(BaseSettings):
     # Application
     environment: str = "development"
     log_level: str = "INFO"
+    log_file: str | None = None  # If set, logs also to this file (e.g. logs/app.log). Default: backend/logs/app.log when enabled.
     cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
     
-    # LangSmith
-    langchain_tracing_v2: bool = False
-    langchain_endpoint: str = "https://api.smith.langchain.com"
-    langchain_api_key: str | None = None
-    langchain_project: str = "enterprise-real-estate-ai"
+    # LangSmith (env: LANGSMITH_TRACING, LANGSMITH_API_KEY, LANGSMITH_PROJECT, LANGSMITH_ENDPOINT)
+    langsmith_tracing: bool = False
+    langsmith_endpoint: str = "https://eu.api.smith.langchain.com"
+    langsmith_api_key: str | None = None
+    langsmith_project: str = "real-estate-ai-deep-agents"
     
     class Config:
         # Use absolute path to ensure .env is found regardless of working directory
