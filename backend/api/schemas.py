@@ -269,6 +269,43 @@ class PlatformThreadHistoryRequest(BaseModel):
     )
 
 
+class PlatformThreadStateUpdateRequest(BaseModel):
+    """POST /threads/{thread_id}/state - update thread state (LangGraph Platform)."""
+
+    values: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Partial state to merge (e.g. { files: {...} })",
+    )
+    checkpoint: Optional[Dict[str, Any]] = Field(
+        None, description="Checkpoint to update (optional)"
+    )
+    as_node: Optional[str] = Field(None, description="Update as if this node executed")
+
+
+class PlatformAssistantResponse(BaseModel):
+    """GET /assistants/{id} - assistant object (LangGraph Platform)."""
+
+    assistant_id: str
+    graph_id: str
+    config: Dict[str, Any] = Field(default_factory=dict)
+    created_at: str
+    updated_at: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    context: Dict[str, Any] = Field(default_factory=dict)
+    version: int = Field(default=1)
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class PlatformAssistantsSearchRequest(BaseModel):
+    """POST /assistants/search - search assistants (LangGraph Platform)."""
+
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    limit: int = Field(default=10, ge=1, le=1000)
+    offset: int = Field(default=0, ge=0)
+    graph_id: Optional[str] = Field(None, description="Filter by graph ID")
+
+
 # Auth (Phase 2)
 class TokenResponse(BaseModel):
     """JWT token response."""

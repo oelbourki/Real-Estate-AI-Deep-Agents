@@ -38,6 +38,9 @@ from api.schemas import (
     PlatformThreadSearchRequest,
     PlatformRunCreateRequest,
     PlatformThreadHistoryRequest,
+    PlatformThreadStateUpdateRequest,
+    PlatformAssistantResponse,
+    PlatformAssistantsSearchRequest,
 )
 from utils.message_serializer import serialize_messages
 from utils.monitoring import setup_langsmith, metrics_collector
@@ -279,6 +282,60 @@ async def platform_info():
     )
 
 
+# ---------------------------------------------------------------------------
+# Assistants (LangGraph Platform) – for deep-agents-ui assistant resolution
+# ---------------------------------------------------------------------------
+
+
+def _synthetic_assistant(assistant_id: str, graph_id: Optional[str] = None) -> dict:
+    """Build a synthetic assistant object for GET /assistants/{id} or search."""
+    gid = graph_id or assistant_id
+    now = _now_iso()
+    return {
+        "assistant_id": assistant_id,
+        "graph_id": gid,
+        "config": {},
+        "created_at": now,
+        "updated_at": now,
+        "metadata": {"server": "fastapi", "created_by": "system"},
+        "context": {},
+        "version": 1,
+        "name": assistant_id if len(assistant_id) < 36 else "Assistant",
+        "description": None,
+    }
+
+
+@app.get(
+    "/assistants/{assistant_id}",
+    response_model=PlatformAssistantResponse,
+    tags=["langgraph-platform"],
+    summary="Get assistant (LangGraph Platform)",
+)
+async def platform_get_assistant(assistant_id: str):
+    """GET /assistants/{id} - deep-agents-ui uses this; return synthetic assistant."""
+    return PlatformAssistantResponse(**_synthetic_assistant(assistant_id))
+
+
+@app.post(
+    "/assistants/search",
+    response_model=list,
+    tags=["langgraph-platform"],
+    summary="Search assistants (LangGraph Platform)",
+)
+async def platform_search_assistants(body: PlatformAssistantsSearchRequest):
+    """POST /assistants/search - deep-agents-ui uses this with graphId; return one synthetic assistant per graph_id."""
+    results = []
+    graph_id = body.graph_id
+    if graph_id:
+        # Return single synthetic assistant for this graph (default assistant)
+        results.append(
+            PlatformAssistantResponse(
+                **_synthetic_assistant(graph_id, graph_id=graph_id)
+            ).model_dump()
+        )
+    return results[: body.limit]
+
+
 @app.post(
     "/threads",
     response_model=PlatformThreadResponse,
@@ -346,6 +403,23 @@ async def platform_get_thread_state(thread_id: str):
         "config": {},
         "values": {"messages": []},
         "interrupts": {},
+    }
+
+
+@app.post(
+    "/threads/{thread_id}/state",
+    tags=["langgraph-platform"],
+    summary="Update thread state (LangGraph Platform)",
+)
+async def platform_update_thread_state(
+    thread_id: str, body: PlatformThreadStateUpdateRequest
+):
+    """POST /threads/{id}/state - deep-agents-ui setFiles uses this. Accepts partial values (e.g. files); returns success (persistence optional)."""
+    # Accept partial state (e.g. { values: { files: {...} } }). Full persistence would require
+    # reading current checkpoint, merging, and writing; for compatibility we return success.
+    _ = body.values
+    return {
+        "checkpoint": {"thread_id": thread_id, "checkpoint_ns": "", "checkpoint_id": ""}
     }
 
 
