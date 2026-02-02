@@ -99,10 +99,30 @@ class Settings(BaseSettings):
     langsmith_api_key: str | None = None
     langsmith_project: str = "real-estate-ai-deep-agents"
 
+    # Langfuse (LLM observability; optional)
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
+
+    # PostgreSQL (for persistent checkpoints; optional – fallback to in-memory if not set)
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_db: str = "real_estate_agent"
+    postgres_user: str = "postgres"
+    postgres_password: str = ""
+    postgres_pool_size: int = 5
+    postgres_max_overflow: int = 10
+
+    # Auth (Phase 2 – JWT; optional)
+    jwt_secret_key: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_days: int = 30
+
     # Pydantic v2: use SettingsConfigDict instead of class Config
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),  # absolute path for langgraph dev from project root
         case_sensitive=False,
+        extra="ignore",  # ignore unknown env vars (e.g. LANGFUSE_BASE_URL typo)
     )
 
 

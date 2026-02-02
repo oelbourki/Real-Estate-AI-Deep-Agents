@@ -43,6 +43,7 @@ def serialize_message(message: BaseMessage) -> Dict[str, Any]:
             msg_dict["name"] = message.name
 
     # Add tool calls if present (for AIMessage)
+    # agent-chat-ui ToolCalls component expects each tc to have tc.args as an object (never null/undefined)
     if (
         isinstance(message, AIMessage)
         and hasattr(message, "tool_calls")
@@ -50,14 +51,29 @@ def serialize_message(message: BaseMessage) -> Dict[str, Any]:
     ):
         msg_dict["tool_calls"] = []
         for tool_call in message.tool_calls:
+            raw_args = (
+                tool_call.get("args")
+                if isinstance(tool_call, dict)
+                else getattr(tool_call, "args", None)
+            )
+            args_obj = raw_args if isinstance(raw_args, dict) else {}
+            if args_obj is None:
+                args_obj = {}
+            name = (
+                tool_call.get("name", "")
+                if isinstance(tool_call, dict)
+                else getattr(tool_call, "name", "")
+            )
             tool_call_dict = {
-                "id": tool_call.get("id", ""),
+                "id": tool_call.get("id", "")
+                if isinstance(tool_call, dict)
+                else getattr(tool_call, "id", ""),
                 "type": "function",
+                "name": name,
+                "args": args_obj,
                 "function": {
-                    "name": tool_call.get("name", ""),
-                    "arguments": json.dumps(tool_call.get("args", {}))
-                    if isinstance(tool_call.get("args"), dict)
-                    else str(tool_call.get("args", "")),
+                    "name": name,
+                    "arguments": json.dumps(args_obj),
                 },
             }
             msg_dict["tool_calls"].append(tool_call_dict)

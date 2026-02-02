@@ -223,12 +223,130 @@ def create_main_agent():
         raise
 
 
+def create_main_agent_with_checkpointer(checkpointer):
+    """
+    Create the main orchestrator agent with a given checkpointer (e.g. AsyncPostgresSaver).
+
+    Use this when you need persistent state (Postgres) or async invoke/astream.
+    The rest of the setup (model, tools, subagents, backend, memory, HITL) is identical
+    to create_main_agent().
+
+    Returns:
+        Compiled LangGraph StateGraph agent (supports ainvoke/astream if checkpointer is async).
+    """
+    # Reuse the same logic as create_main_agent but with provided checkpointer
+    # We need model, tools, subagents, backend, memory, interrupt_on
+    setup_langsmith()
+    # LLM init (same block as in create_main_agent - inline to avoid code duplication)
+    model = None
+    model_initialized = False
+    if settings.openrouter_api_key:
+        try:
+            from langchain_openai import ChatOpenAI
+
+            openrouter_model = settings.openrouter_model
+            model = ChatOpenAI(
+                model=openrouter_model,
+                api_key=settings.openrouter_api_key,
+                base_url=settings.openrouter_base_url,
+                default_headers={
+                    "HTTP-Referer": "https://github.com/oelbourki",
+                    "X-Title": "Real Estate AI Deep Agents",
+                },
+            )
+            model_initialized = True
+        except Exception as openrouter_error:
+            logger.warning(f"⚠️  OpenRouter initialization failed: {openrouter_error}")
+
+    if not model_initialized and OLLAMA_AVAILABLE:
+        try:
+            ollama_model_name = settings.ollama_model
+            try:
+                model = ChatOllama(
+                    model=ollama_model_name,
+                    base_url=settings.ollama_base_url,
+                )
+                model_initialized = True
+            except Exception:
+                model = init_chat_model(
+                    f"ollama:{ollama_model_name}",
+                    base_url=settings.ollama_base_url,
+                    api_key=settings.ollama_api_key,
+                )
+                model_initialized = True
+        except Exception as ollama_error:
+            logger.warning(f"⚠️  Ollama not available: {ollama_error}")
+
+    if not model_initialized and settings.openai_api_key:
+        try:
+            openai_model = (
+                settings.default_model
+                if "openai:" in settings.default_model
+                else "openai:gpt-oss-20b"
+            )
+            model = init_chat_model(openai_model, api_key=settings.openai_api_key)
+            model_initialized = True
+        except Exception as e:
+            logger.warning(f"OpenAI initialization failed: {e}")
+
+    if not model_initialized and settings.groq_api_key:
+        try:
+            model = init_chat_model(
+                "groq:qwen/qwen3-32b", api_key=settings.groq_api_key
+            )
+            model_initialized = True
+        except Exception as e:
+            logger.warning(f"Groq initialization failed: {e}")
+
+    if not model_initialized and settings.anthropic_api_key:
+        try:
+            model = init_chat_model(
+                "anthropic:claude-sonnet-4-5-20250929",
+                api_key=settings.anthropic_api_key,
+            )
+            model_initialized = True
+        except Exception as e:
+            logger.warning(f"Anthropic initialization failed: {e}")
+
+    if not model_initialized and settings.google_api_key:
+        try:
+            model = init_chat_model(
+                "google:gemini-2.0-flash-exp", api_key=settings.google_api_key
+            )
+            model_initialized = True
+        except Exception as e:
+            logger.warning(f"Google initialization failed: {e}")
+
+    if not model_initialized:
+        raise ValueError(
+            "No LLM provider available. Set OPENROUTER_API_KEY, run Ollama, or set another provider key."
+        )
+
+    tools = [realty_us_search_buy, realty_us_search_rent]
+    subagents = get_subagents()
+    backend = get_backend()
+    interrupt_on = get_hitl_config()
+
+    agent = create_deep_agent(
+        model=model,
+        system_prompt=MAIN_AGENT_SYSTEM_PROMPT,
+        tools=tools,
+        backend=backend,
+        checkpointer=checkpointer,
+        subagents=subagents,
+        memory=get_memory_paths(),
+        interrupt_on=interrupt_on,
+    )
+    logger.info("Main agent created with custom checkpointer (async-capable)")
+    return agent
+
+
 # Global agent instance (lazy initialization)
 _main_agent = None
 
 
 def get_main_agent():
-    """Get or create the main agent instance."""
+    """Get or create the main agent instance (in-memory checkpointer)."""
     global _main_agent
     if _main_agent is None:
         _main_agent = create_main_agent()

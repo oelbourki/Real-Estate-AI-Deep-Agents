@@ -34,13 +34,20 @@ passlib[bcrypt]==1.7.4
 # Logging & Monitoring
 structlog==24.1.0
 langsmith>=0.1.0  # LangSmith for tracing and observability
+langfuse>=2.0.0  # Langfuse for LLM observability (optional)
 
 # Redis for caching (required for Phase 4)
 redis==5.0.1
 hiredis==2.3.2
 
-# Optional: Database (if using persistent store)
-# psycopg2-binary==2.9.9
+# PostgreSQL (optional – for persistent checkpoints via LangGraph)
+langgraph-checkpoint-postgres>=2.0.0
+psycopg[binary]>=3.1.0
+psycopg_pool>=3.1.0
+
+# Auth Phase 2 – User/Session in Postgres
+sqlmodel>=0.0.22
+greenlet>=3.0.0
 
 # Development & Testing
 pytest==8.3.3

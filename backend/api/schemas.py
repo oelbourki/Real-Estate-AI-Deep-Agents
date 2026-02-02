@@ -1,7 +1,10 @@
 """API request/response schemas for OpenAPI documentation."""
 
-from pydantic import BaseModel, Field
+import re
+from datetime import datetime
 from typing import Optional, List, Dict, Any
+
+from pydantic import BaseModel, Field, EmailStr, SecretStr, field_validator
 
 
 class ChatRequest(BaseModel):
@@ -125,6 +128,10 @@ class HealthResponse(BaseModel):
         ..., description="Environment (development, staging, production)"
     )
     redis: str = Field(..., description="Redis connection status")
+    postgres: Optional[str] = Field(
+        None,
+        description="PostgreSQL checkpointer status (connected/disconnected/unconfigured)",
+    )
     timestamp: float = Field(..., description="Check timestamp")
 
 
@@ -142,6 +149,169 @@ class MetricsResponse(BaseModel):
     error_rate: float
 
 
-# Note: LangGraph Platform API schemas (ThreadCreateRequest, ThreadResponse, RunCreateRequest, RunResponse)
-# are no longer needed as langgraph dev provides all endpoints automatically.
-# See langgraph.json for configuration.
+# Thread/Run API (Phase 3 – compatible with langgraph dev semantics)
+class ThreadCreateResponse(BaseModel):
+    """Response after creating a thread."""
+
+    thread_id: str = Field(..., description="Thread ID for subsequent runs")
+
+
+class ThreadListResponse(BaseModel):
+    """List of thread IDs (scoped by auth when implemented)."""
+
+    thread_ids: List[str] = Field(default_factory=list, description="Thread IDs")
+
+
+class RunInput(BaseModel):
+    """Input for a run: single message or list of messages."""
+
+    message: Optional[str] = Field(
+        None, description="Single user message (converted to messages)"
+    )
+    messages: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Full message list in OpenAI format"
+    )
+
+
+class RunCreateRequest(BaseModel):
+    """Request body for POST /threads/{thread_id}/runs and .../runs/stream."""
+
+    input: RunInput = Field(..., description="Run input (message or messages)")
+
+
+class RunResponse(BaseModel):
+    """Response from a run (same shape as LangGraph chat)."""
+
+    messages: List[Dict[str, Any]] = Field(
+        ..., description="Messages in LangGraph format"
+    )
+    thread_id: str = Field(..., description="Thread ID")
+
+
+# ---------------------------------------------------------------------------
+# LangGraph Platform API compatibility (for agent-chat-ui)
+# ---------------------------------------------------------------------------
+
+
+class PlatformInfoResponse(BaseModel):
+    """GET /info - server info (LangGraph Platform)."""
+
+    version: str = Field(default="1.0.0", description="API version")
+    langgraph_py_version: str = Field(
+        default="", description="LangGraph Python version"
+    )
+    flags: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PlatformThreadCreateRequest(BaseModel):
+    """POST /threads - create thread (Platform)."""
+
+    thread_id: Optional[str] = Field(None, description="Optional UUID for thread")
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    if_exists: Optional[str] = Field("raise", description="raise | do_nothing")
+
+
+class PlatformThreadResponse(BaseModel):
+    """Thread object (Platform API)."""
+
+    thread_id: str
+    created_at: str = Field(..., description="ISO datetime")
+    updated_at: str = Field(..., description="ISO datetime")
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    status: str = Field(default="idle", description="idle | busy | interrupted | error")
+    config: Dict[str, Any] = Field(default_factory=dict)
+    values: Dict[str, Any] = Field(default_factory=dict)
+    interrupts: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PlatformThreadSearchRequest(BaseModel):
+    """POST /threads/search - search threads (Platform)."""
+
+    ids: Optional[List[str]] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    values: Dict[str, Any] = Field(default_factory=dict)
+    status: Optional[str] = None
+    limit: int = Field(default=10, ge=1, le=1000)
+    offset: int = Field(default=0, ge=0)
+    sort_by: Optional[str] = Field(
+        "updated_at", description="thread_id | status | created_at | updated_at"
+    )
+    sort_order: Optional[str] = Field("desc", description="asc | desc")
+
+
+class PlatformRunCreateRequest(BaseModel):
+    """POST /threads/{id}/runs/stream or /runs/wait (Platform)."""
+
+    assistant_id: Optional[str] = Field(
+        None, description="Graph/assistant ID (e.g. real-estate-agent)"
+    )
+    input: Dict[str, Any] = Field(
+        default_factory=dict, description="Input state, e.g. { messages: [...] }"
+    )
+    stream_mode: Optional[List[str]] = Field(default=["messages"])
+    config: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class PlatformThreadHistoryRequest(BaseModel):
+    """POST /threads/{thread_id}/history - get thread state history (LangGraph Platform)."""
+
+    limit: int = Field(
+        default=10, ge=1, le=1000, description="Max number of states to return"
+    )
+    before: Optional[Dict[str, Any]] = Field(
+        None, description="Return states before this checkpoint"
+    )
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    checkpoint: Optional[Dict[str, Any]] = Field(
+        None, description="Filter by checkpoint"
+    )
+
+
+# Auth (Phase 2)
+class TokenResponse(BaseModel):
+    """JWT token response."""
+
+    access_token: str = Field(..., description="JWT access token")
+    token_type: str = Field(default="bearer", description="Token type")
+    expires_at: datetime = Field(..., description="Expiration timestamp")
+
+
+class UserCreate(BaseModel):
+    """User registration request."""
+
+    email: EmailStr = Field(..., description="User email")
+    password: SecretStr = Field(
+        ..., min_length=8, max_length=64, description="Password"
+    )
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: SecretStr) -> SecretStr:
+        p = v.get_secret_value()
+        if len(p) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        if not re.search(r"[A-Z]", p):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", p):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"[0-9]", p):
+            raise ValueError("Password must contain at least one number")
+        return v
+
+
+class UserResponse(BaseModel):
+    """User response (e.g. after register)."""
+
+    id: int = Field(..., description="User ID")
+    email: str = Field(..., description="User email")
+    token: TokenResponse = Field(..., description="JWT token")
+
+
+class SessionResponse(BaseModel):
+    """Chat session response."""
+
+    session_id: str = Field(..., description="Session (thread) ID")
+    name: str = Field(default="", max_length=100, description="Session name")
+    token: TokenResponse = Field(..., description="JWT for this session")

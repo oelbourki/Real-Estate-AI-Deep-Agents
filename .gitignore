@@ -253,3 +253,4 @@ test_*.py
 !tests/
 
 docs-md/
+projects/

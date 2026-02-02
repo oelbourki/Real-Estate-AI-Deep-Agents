@@ -1,35 +1,45 @@
 #!/usr/bin/env python3
-"""Run script for the Real Estate AI Deep Agents backend.
+"""Run the FastAPI backend.
 
-Run from project root with the backend venv active so the reload worker sees the same env:
-  cd backend && . venv/bin/activate && PYTHONPATH=.. python run.py
-  or from repo root: backend/venv/bin/python backend/run.py
+From project root:
+  cd backend && . venv/bin/activate && python run.py
+  # or with PYTHONPATH from repo root:
+  python backend/run.py  (requires: pip install -r backend/requirements.txt)
 """
 
+import logging
 import os
 import sys
+import warnings
 from pathlib import Path
 
-# Ensure project root and backend are on path (root-based runs)
-_root = Path(__file__).resolve().parent.parent
+# Suppress Pydantic UserWarnings from deps (LangChain/DeepAgents) using typing.NotRequired
+warnings.filterwarnings(
+    "ignore",
+    message=".*NotRequired.*",
+    category=UserWarning,
+    module="pydantic",
+)
+
 _backend = Path(__file__).resolve().parent
+_root = _backend.parent
+
+# So imports like "api.main", "config.settings" resolve from backend
 for _p in (_root, _backend):
-    _s = str(_p)
-    if _s not in sys.path:
-        sys.path.insert(0, _s)
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
+os.environ["PYTHONPATH"] = os.pathsep.join(
+    [str(_root), str(_backend), os.environ.get("PYTHONPATH", "")]
+)
 
-# So the uvicorn reload worker (spawned subprocess) inherits the same path
-_existing = os.environ.get("PYTHONPATH", "")
-_extra = os.pathsep.join([str(_root), str(_backend)])
-os.environ["PYTHONPATH"] = _extra + (os.pathsep + _existing if _existing else "")
-
-# Imports must follow sys.path setup so config/settings resolve (root-based runs)
 import uvicorn  # noqa: E402
 from config.settings import settings  # noqa: E402
 from utils.logging_config import setup_logging  # noqa: E402
 
-# Configure logging (console + file)
 setup_logging()
+
+# Reduce watchfiles log noise (reload still works; we just don't log every change)
+logging.getLogger("watchfiles.main").setLevel(logging.WARNING)
 
 if __name__ == "__main__":
     uvicorn.run(
@@ -38,4 +48,14 @@ if __name__ == "__main__":
         port=8000,
         reload=settings.environment == "development",
         log_level=settings.log_level.lower(),
+        reload_dirs=[str(_backend)],
+        reload_excludes=[
+            "working/*",
+            "memories/*",
+            "reports/*",
+            "logs/*",
+            ".git/*",
+            "*.pyc",
+            "__pycache__",
+        ],
     )
