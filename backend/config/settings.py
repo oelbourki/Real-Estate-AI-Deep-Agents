@@ -100,9 +100,11 @@ class Settings(BaseSettings):
     langsmith_project: str = "real-estate-ai-deep-agents"
 
     # Pydantic v2: use SettingsConfigDict instead of class Config
+    # extra="ignore" allows env vars (e.g. Langfuse, Postgres from LangGraph Cloud) that aren't defined here
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),  # absolute path for langgraph dev from project root
         case_sensitive=False,
+        extra="ignore",
     )
 
 

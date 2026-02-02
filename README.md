@@ -729,12 +729,15 @@ We're improving the platform toward enterprise-grade production readiness.
 |------|--------|----------|
 | **Security Hardening** | 🔄 In Progress | Critical |
 | **CI/CD Pipeline** | ✅ Done | Critical |
+| **FastAPI server (replace langgraph dev)** | 🔄 In Progress | High |
 | **Test Coverage** | 📋 Planned | High |
 | **Monitoring & Observability** | 🔄 In Progress | High |
 | **Performance Optimization** | 📋 Planned | Medium |
 | **Deployment Automation** | 📋 Planned | Medium |
 
 **Done:** CI/CD (GitHub Actions: Ruff lint + format, Pytest); pre-commit (Ruff for `backend/`).
+
+**In progress:** FastAPI backend is being extended to fully replace `langgraph dev` (same LangGraph Platform API on port 8000); you can already use `python backend/run.py` for chat, streaming, threads, and runs.
 
 **Critical (planned):** Secrets management (Vault/AWS Secrets Manager), auth (JWT or API keys), security headers (CSP, HSTS), dependency scanning.
 
