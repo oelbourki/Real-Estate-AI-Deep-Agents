@@ -96,10 +96,18 @@ The system is built on **LangGraph StateGraph** for state management and agent o
 
 #### LangGraph Internal Structure
 
-<div align="center">
-  <img src="assets/langgraph_architecture.png" alt="LangGraph Internal Structure" width="800" onerror="this.style.display='none'"/>
-  <p><em>LangGraph StateGraph Internal Structure</em></p>
-</div>
+<table>
+  <tr>
+    <td align="center">
+      <img src="assets/langgraph_architecture.png" alt="LangGraph Internal Structure" width="400" onerror="this.style.display='none'"/>
+      <p><em>LangGraph StateGraph Internal Structure</em></p>
+    </td>
+    <td align="center">
+      <img src="assets/architecture.png" alt="Architecture" width="400" onerror="this.style.display='none'"/>
+      <p><em>Architecture</em></p>
+    </td>
+  </tr>
+</table>
 
 > **Note**: This diagram is generated from the actual LangGraph StateGraph structure. You can visualize the graph programmatically using:
 > ```bash
